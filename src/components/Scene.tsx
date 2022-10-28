@@ -11,11 +11,39 @@ import { sceneService } from "../services";
 import { MeshReflectorMaterial } from '@react-three/drei/core/MeshReflectorMaterial'
 import { MeshBasicMaterial } from "three";
 import mainBackground from "../ui/mainBackground.png"
-
+import { useWeb3React } from "@web3-react/core";
+import { InjectedConnector } from "@web3-react/injected-connector";
 
 
 export default function Scene(props: any) {
 
+  const { activate, deactivate, library, account } = useWeb3React();
+  const injected = new InjectedConnector({
+    supportedChainIds: [1, 3, 4, 5, 42, 97],
+  });
+
+  const connectWallet = async () => {
+    try {
+      await activate(injected);
+    } catch (ex) {
+      console.log(ex);
+    }
+  };
+
+  useEffect(() => {
+    account ? setConnected(true) : setConnected(false);
+  }, [account]);
+
+  const disConnectWallet = async () => {
+    try {
+      deactivate();
+      setConnected(false);
+    } catch (ex) {
+      console.log(ex);
+    }
+  };
+
+  const [connected, setConnected] = useState(false);
   const [showType, setShowType] = useState(false);
   const [randomFlag, setRandomFlag] = useState(-1);
   const [camera, setCamera] = useState<object>(Object);
@@ -153,8 +181,16 @@ export default function Scene(props: any) {
           </>
         }
         <div className="download but" onClick={handleDownload}></div>
-        <div className="wallet but" ></div>
+        <div className="wallet but" onClick={connected ? disConnectWallet : connectWallet}></div>
       </div>
+      <h3 style={{
+        display:"flex",
+        top : "107px",
+        right : "44px",
+        position : "absolute",
+        gap :'20px',
+        color : 'rgb(97, 229, 249)'
+      }}>{account ? account.slice(0, 15) + "..." : ""}</h3>
       <div>
         <Selector
           templates={templates}

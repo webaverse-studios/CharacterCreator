@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react"
 import ReactDOM from "react-dom/client";
+import { Web3ReactProvider } from "@web3-react/core";
+import { Web3Provider } from "@ethersproject/providers";
 
 import CharacterEditor from "./components"
 import { createTheme, Alert, IconButton } from "@mui/material"
@@ -26,6 +28,12 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [end, setEnd] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+
+  const getLibrary = (provider: any): Web3Provider => {
+    const library = new Web3Provider(provider);
+    library.pollingInterval = 12000;
+    return library;
+  }
 
   const handleConnect = (principalId) => {
     console.log("Logged in with principalId", principalId);
@@ -103,17 +111,19 @@ function App() {
               visibility: end ? '' : 'hidden'
             }}
           >
-            <CharacterEditor 
-                templates={defaultTemplates[modelClass-1].gender} 
-                theme={defaultTheme} 
-                setLoading={(value) => {
-                  setTimeout (() => {
-                    setLoading(false)
-                    setEnd(true)
-                  }, 1000)
-                }} 
-                setLoadingProgress = {setLoadingProgress}
-              />
+            <Web3ReactProvider getLibrary={getLibrary}>
+              <CharacterEditor 
+                  templates={defaultTemplates[modelClass-1].gender} 
+                  theme={defaultTheme} 
+                  setLoading={(value) => {
+                    setTimeout (() => {
+                      setLoading(false)
+                      setEnd(true)
+                    }, 1000)
+                  }} 
+                  setLoadingProgress = {setLoadingProgress}
+                />
+            </Web3ReactProvider>
             {showAlert && (
               <Alert
                 id="alertTitle"
