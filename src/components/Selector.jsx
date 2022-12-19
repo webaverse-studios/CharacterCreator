@@ -51,11 +51,11 @@ export default function Selector() {
   
   const selectTrait = (trait, textureIndex) => {
     if (trait === null) {
-      if (avatar[currentTrait] && avatar[currentTrait].vrm) {
-        disposeVRM(avatar[currentTrait].vrm)
+      if (avatar[currentTrait.name] && avatar[currentTrait.name].vrm) {
+        disposeVRM(avatar[currentTrait.name].vrm)
         setAvatar({
           ...avatar,
-          [currentTrait]: {},
+          [currentTrait.name]: {},
         })
       }
       return;
@@ -65,9 +65,9 @@ export default function Selector() {
         } else {
           setLoadingTraitOverlay(true)
           templateInfo.traits.map((item) => {
-            if (item.name === currentTrait && item.type === "texture") {
+            if (item.name === currentTrait.name && item.type === "texture") {
               textureTraitLoader(item, trait, templateInfo, setLoadingTraitOverlay)
-            } else if (item.name === currentTrait) {
+            } else if (item.name === currentTrait.name) {
               if (trait.textureCollection && textureIndex) {
                 const txtrs = traits[trait.textureCollection]
                     const localDir = txtrs.collection[textureIndex].directory
@@ -117,14 +117,14 @@ export default function Selector() {
           })
         }
   
-        if (avatar[currentTrait]) {
+        if (avatar[currentTrait.name]) {
           const traitData = templateInfo.traits.find(
-            (element) => element.name === currentTrait,
+            (element) => element.name === currentTrait.name,
           )
   
           // set the new trait
           const newAvatarData = {}
-          newAvatarData[currentTrait] = {
+          newAvatarData[currentTrait.name] = {
             traitInfo: item,
             model: vrm.scene,
             vrm: vrm,
@@ -202,7 +202,7 @@ export default function Selector() {
                   )
                   // now check if the avatar properties include this restrictions to remove
                   for (const property in avatar) {
-                    if (property !== currentTrait) {
+                    if (property !== currentTrait.name) {
                       typeRestrictions.forEach((typeRestriction) => {
                         if (avatar[property].traitInfo?.type) {
                           const types = avatar[property].traitInfo.type
@@ -240,7 +240,7 @@ export default function Selector() {
           }
   
           for (const property in newAvatar) {
-            if (property !== currentTrait) {
+            if (property !== currentTrait.name) {
               if (newAvatar[property].vrm) {
                 const tdata = templateInfo.traits.find(
                   (element) => element.name === property,
@@ -248,7 +248,7 @@ export default function Selector() {
                 const restricted = tdata.restrictedTraits
                 if (restricted) {
                   for (let i = 0; i < restricted.length; i++) {
-                    if (restricted[i] === currentTrait) {
+                    if (restricted[i] === currentTrait.name) {
                       // if one of their restrcited elements match, remove him and break
                       newAvatarData[property] = {}
                       break
@@ -395,17 +395,17 @@ export default function Selector() {
               </div>
               {currentTrait && currentTrait.collection &&
                 currentTrait.collection.map((item, index) => {
-                  console.log('item is', item)
+                  console.log('-------------item is', item)
                   if (!item.thumbnailOverrides) {
                     return (
                       <div
                         key={index}
                         classname={
-                          avatar[currentTrait].traitInfo.id === item.id
+                          avatar[currentTrait.name].traitInfo.id === item.id
                             ? 'selectorButtonActive'
                             : 'selectorButton'
                         }
-                        className={`selector-button coll-${currentTrait} ${
+                        className={`selector-button coll-${currentTrai.name} ${
                           selectValue === item.id ? "active" : ""
                         }`}
                         onClick={() => {
@@ -425,7 +425,7 @@ export default function Selector() {
                         <img
                           src={tick}
                           className={
-                            avatar[currentTrait].traitInfo.id === item.id
+                            avatar[currentTrait.name].traitInfo.id === item.id
                             ? styles["tickStyle"]
                               : styles["tickStyleInActive"]
                           }
@@ -436,40 +436,40 @@ export default function Selector() {
                       </div>
                     )
                   } else {
-                    item.thumbnailOverrides.map((icn, icnindex) => {
-                      return (
-                        <div
-                          key={index + "_" + icnindex}
-                          style={selectorButton}
-                          className={`selector-button coll-${currentTrait} ${
-                            selectValue === item.id ? "active" : ""
-                          }`}
-                          onClick={() => {
-                            !isMute && play()
-                            console.log('select trait', item)
-                            selectTrait(item, icnindex)
-                          }}
-                        >
-                          <img
-                            className={styles["trait-icon"]}
-                            src={`${templateInfo.thumbnailsDirectory}${icn}`}
-                          />
-                          <img
-                            src={tick}
-                            className={
-                              avatar[currentTrait].traitInfo.id === item.id
-                              ? styles["tickStyle"]
-                                : styles["tickStyleInActive"]
-                            }
-                          />
-                          {selectValue === item.id && loadedPercent > 0 && (
-                            <div className={styles["loading-trait"]}>
-                              {loadedPercent}%
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })
+                    return(
+                      item.thumbnailOverrides.map((icn, icnindex) => {
+                        return (
+                          <div
+                            key={index + "_" + icnindex}
+                            //className = {styles["selectorButtonActive"]}
+                            className={styles["selector-button"]}
+                            onClick={() => {
+                              !isMute && play()
+                              console.log('select trait', item)
+                              selectTrait(item, icnindex)
+                            }}
+                          >
+                            <img
+                              className={styles["trait-icon"]}
+                              src={`${templateInfo.thumbnailsDirectory}${icn}`}
+                            />
+                            <img
+                              src={tick}
+                              // className={
+                              //   avatar[currentTrait.name].traitInfo.id === item.id
+                              //   ? styles["tickStyle"]
+                              //     : styles["tickStyleInActive"]
+                              // }
+                            />
+                            {selectValue === item.id && loadedPercent > 0 && (
+                              <div className={styles["loading-trait"]}>
+                                {loadedPercent}%
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
+                    )
                   }
                 })}
       </div>
