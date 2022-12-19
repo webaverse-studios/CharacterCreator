@@ -87,7 +87,6 @@ export default function Editor({templateInfo, controls}) {
         <div className={styles['MenuTitle']}>
           <BackButton onClick={() => {
             console.log('BackButton')
-            
             setCurrentTemplate(null)
             setCurrentView(ViewStates.LANDER_LOADING)
             console.log('ViewStates.LANDER_LOADING', ViewStates.LANDER_LOADING)
