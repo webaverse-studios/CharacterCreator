@@ -37,7 +37,7 @@ export default function Editor({templateInfo, controls}) {
     }
 
     moveCamera(option.cameraTarget);
-    setCurrentTrait(option.name)
+    setCurrentTrait(option)
     
     !isMute && play();
   }
@@ -100,8 +100,9 @@ export default function Editor({templateInfo, controls}) {
             onClick = {()=>{
               selectOption(item)
             }} 
+            active={currentTrait === item.name}
             key = {index}>
-            <img className={currentTrait !== item.name ? styles['MenuImg'] : styles['MenuImgActive']} src={templateInfo.traitIconsDirectory + item.icon} />
+            <img className={styles['MenuImg']} src={templateInfo.traitIconsDirectory + item.icon} />
           </div>
         ))}
 
