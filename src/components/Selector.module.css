@@ -17,7 +17,7 @@
   display: flex;
   flex-direction: column;
   user-select: none;
-
+  overflow-y: scroll;
   --webkit-mask-image: -webkit-gradient(linear, 70% 80%, 70% 100%, from(rgba(0, 0, 0, 1)), to(rgba(0, 0, 0, 0)));
   mask-image: linear-gradient(to bottom,
       rgba(0, 0, 0, 1) 0px,
