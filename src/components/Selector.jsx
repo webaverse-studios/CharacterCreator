@@ -32,6 +32,7 @@ export default function Selector() {
    console.log('currentTemplateIndex is', currentTemplateIndex)
    const templateInfo = template[currentTemplate.index];
    const traits = templateInfo.traits
+   const textures = templateInfo.textures;
    console.log('state traits is', traits)
    const traitTypes = templateInfo.traits.map((trait) => trait.type);
 
@@ -68,9 +69,11 @@ export default function Selector() {
             if (item.name === currentTrait.name && item.type === "texture") {
               textureTraitLoader(item, trait, templateInfo, setLoadingTraitOverlay)
             } else if (item.name === currentTrait.name) {
-              if (trait.textureCollection && textureIndex) {
-                const txtrs = traits[trait.textureCollection]
-                    const localDir = txtrs.collection[textureIndex].directory
+              const textureCollection = textures.find(item => item.trait === trait.textureCollection);
+              if (textureCollection && textureIndex) {
+                //const txtrs = textures[textureCollection]
+                //console.log(txtrs)
+                    const localDir = textureCollection.collection[textureIndex].directory
                     const texture = templateInfo.traitsDirectory + localDir
                     const loader = new THREE.TextureLoader()
                     loader.load(texture, (txt) => {
@@ -92,6 +95,7 @@ export default function Selector() {
     item,
     trait,
     addToScene = true,
+    texture
   ) => {
     let r_vrm
     console.log('itemLoader item is', item)
@@ -395,7 +399,6 @@ export default function Selector() {
               </div>
               {currentTrait && currentTrait.collection &&
                 currentTrait.collection.map((item, index) => {
-                  console.log('-------------item is', item)
                   if (!item.thumbnailOverrides) {
                     return (
                       <div
@@ -441,7 +444,6 @@ export default function Selector() {
                         return (
                           <div
                             key={index + "_" + icnindex}
-                            //className = {styles["selectorButtonActive"]}
                             className={styles["selector-button"]}
                             onClick={() => {
                               !isMute && play()
@@ -450,22 +452,23 @@ export default function Selector() {
                             }}
                           >
                             <img
-                              className={styles["trait-icon"]}
+                              className={styles["icon"]}
                               src={`${templateInfo.thumbnailsDirectory}${icn}`}
+                              style={{ width: "3em", height: "3em", }}
                             />
-                            <img
+                            {/* <img
                               src={tick}
-                              // className={
-                              //   avatar[currentTrait.name].traitInfo.id === item.id
-                              //   ? styles["tickStyle"]
-                              //     : styles["tickStyleInActive"]
-                              // }
-                            />
-                            {selectValue === item.id && loadedPercent > 0 && (
-                              <div className={styles["loading-trait"]}>
-                                {loadedPercent}%
-                              </div>
-                            )}
+                              className={
+                                styles["tickStyleInActive"]
+                              }
+                            /> */}
+                            {
+                            // selectValue === item.id && loadedPercent > 0 && (
+                            //   <div className={styles["loading-trait"]}>
+                            //     {/* {loadedPercent}% */}
+                            //   </div>
+                            // )
+                            }
                           </div>
                         )
                       })
