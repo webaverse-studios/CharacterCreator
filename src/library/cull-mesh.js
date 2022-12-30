@@ -1,22 +1,31 @@
-import { BufferAttribute, Raycaster, Vector3 } from "three";
+import { BufferAttribute, Raycaster, Vector3, Color, BufferGeometry,LineBasicMaterial,Line,Scene } from "three";
 
 let origin = new Vector3();
 let direction = new Vector3();
 const intersections = [];
 
 const raycaster = new Raycaster();
-raycaster.firstHitOnly = true;
+//raycaster.firstHitOnly = true;
 
 const distance = 0.03;
 const distanceAfter = 0.03;
-
+let mainScene = null;
 export const CullHiddenFaces = async(meshes) => {
     //clearRays();
     // make a 2 dimensional array that will hold the layers
+    
     const culls = [];
 
     console.log("cull hidden meshes: ", meshes)
     // make sure to place them in the correct array group based on their culling layer
+   
+    mainScene = meshes[0].parent;
+    if (mainScene.lines != null){
+        mainScene.lines.forEach(line => {
+            line.visible = false;
+        });
+        mainScene.lines.length = 0;
+    }
     meshes.forEach(mesh => {
         if (mesh.userData.cullLayer != null){
             if (mesh.userData.origIndexBuffer == null)
@@ -39,6 +48,9 @@ export const CullHiddenFaces = async(meshes) => {
     // go from top to bottom to increase array size of collide meshes
     // lowest layer should consider all meshes
     // top layer will always be visible (if theres only 1 lkayer (base layer), then it will be visible)
+
+    const geomsIndices = [];
+
     for (let i = culls.length - 1; i >= 0; i--) {
         //console.log(culls[i])
         if (hitArr.length != 0 || culls.length >= 1){
@@ -51,12 +63,54 @@ export const CullHiddenFaces = async(meshes) => {
                 const normalsData = mesh.geometry.attributes.normal.array;
                 const faceNormals = mesh.geometry.userData.faceNormals;
                 console.log(hitArr)
-                mesh.geometry.setIndex(getIndexBuffer(index,vertexData,normalsData, faceNormals, hitArr,mesh.userData.cullDistance));
+                //getIndexBuffer(index,vertexData,normalsData, faceNormals, hitArr,mesh.userData.cullDistance, i ===0)
+                geomsIndices.push({
+                    geom: mesh.geometry,
+                    index: getIndexBuffer(index,vertexData,normalsData, faceNormals, hitArr,mesh.userData.cullDistance, i ===0)
+                })
+                //mesh.geometry.setIndex(getIndexBuffer(index,vertexData,normalsData, faceNormals, hitArr,mesh.userData.cullDistance, i ===0));
             }
         }
         hitArr = [...hitArr, ...culls[i]]
         
     }
+
+    geomsIndices.forEach(elem => {
+        elem.geom.setIndex(elem.index);
+    });
+}
+
+function DebugRay(origin, direction, length, color, scene){
+    //console.log("tt")
+    if (scene.lines == null)
+        scene.lines = [];
+
+    let endPoint = new Vector3();
+    endPoint.addVectors ( origin, direction.clone().multiplyScalar( length ) );
+
+    //geometry.vertexColors.
+    
+    const points = []
+    points.push( origin );
+    points.push( endPoint );
+    const geometry = new BufferGeometry().setFromPoints( points );
+
+    const cols = [];
+    cols.push(new Color(0x000000));
+    cols.push(new Color(0xffffff)); 
+
+    // geometry.setAttribute(
+    //     'color',
+    //     new BufferAttribute(new Float32Array(cols), 2));
+
+    let material = new LineBasicMaterial( {color:color } );
+    var line = new Line( geometry, material );
+
+    
+
+    line.renderOrder = 100;
+    scene.add( line );
+    scene.lines.push(line);
 }
 
 const getDistanceInOut = (distanceArr) => {
@@ -83,7 +137,7 @@ const getDistanceInOut = (distanceArr) => {
     return [distIn, distOut]
 }
 
-const getIndexBuffer = (index, vertexData, normalsData, faceNormals, intersectModels, distanceArr) =>{
+const getIndexBuffer = (index, vertexData, normalsData, faceNormals, intersectModels, distanceArr, debug = false) =>{
     const indexCustomArr = [];
     const distArr = getDistanceInOut(distanceArr);
     
@@ -121,6 +175,7 @@ const getIndexBuffer = (index, vertexData, normalsData, faceNormals, intersectMo
 
             // if it hits it means vertex is visible
             if (raycaster.intersectObjects( intersectModels, false, intersections ).length === 0){
+                if (debug)DebugRay(origin, direction.clone().multiplyScalar(-1) , raycaster.far, 0xffff00,mainScene );
                 for (let k = 0; k < 3 ; k++){
                     indexCustomArr.push(index[idxBase+k])
                 }

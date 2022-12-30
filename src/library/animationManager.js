@@ -108,7 +108,7 @@ export class AnimationManager{
   }
 
   startAnimation(vrm){
-    //return
+    return
     if (!this.animations) {
       console.warn("no animations were preloaded, ignoring");
       return
