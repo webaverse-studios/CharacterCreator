@@ -63,7 +63,6 @@ function App() {
 
         <Landing />
         <Scene />
-        <MintPopup />
         <UserMenu />
       </Fragment>
     )

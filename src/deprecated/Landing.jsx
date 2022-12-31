@@ -11,6 +11,9 @@ import clickUrl from "../../public/sound/class_click.wav"
 import passUrl from "../../public/sound/class_pass.wav"
 import { AudioContext } from "../context/AudioContext"
 
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { VRMLoaderPlugin } from "@pixiv/three-vrm"
+import { loadModel } from "../library/utils"
 import { PerspectiveCamera } from "@react-three/drei/core/PerspectiveCamera"
 import { Canvas } from "@react-three/fiber"
 import { SceneContext } from "../context/SceneContext"
@@ -41,8 +44,14 @@ const Classes = {
   },
 }
 
+
+const gltfLoader = new GLTFLoader()
+gltfLoader.register((parser) => {
+  return new VRMLoaderPlugin(parser)
+})
+
 export default function Landing() {
-  const { setCurrentTemplate, currentTemplate, loadModel } =
+  const { setCurrentTemplate, currentTemplate } =
     useContext(SceneContext)
   const { currentView, setCurrentView } = useContext(ViewContext)
   const { isMute } = useContext(AudioContext)
@@ -54,6 +63,12 @@ export default function Landing() {
   const camera = React.useRef()
 
   useEffect(() => {
+
+    const gltfLoader = new GLTFLoader()
+    gltfLoader.register((parser) => {
+      return new VRMLoaderPlugin(parser)
+    })
+
     async function createModel(item) {
       const animManager = new AnimationManager()
       const vrm = await loadModel(item.model)
@@ -93,7 +108,6 @@ export default function Landing() {
 
   const handleClick = (type) => {
     if (!isMute) click()
-    console.log("type is", type)
     setCurrentTemplate(type)
     console.log("ViewStates.CREATOR_LOADING", ViewStates.CREATOR_LOADING)
     setCurrentView(ViewStates.CREATOR_LOADING)

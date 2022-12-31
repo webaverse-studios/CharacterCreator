@@ -97,6 +97,7 @@ function App() {
         <Landing />so far ARGs have only been demonstrated as
         <MintPopup />*/}
         <UserMenu />
+        {templateInfo && template && currentTemplate && currentCameraMode === CameraMode.AR && <ARScene />}
         {templateInfo && template && currentTemplate && currentCameraMode !== CameraMode.AR && <Scene />}
 
 

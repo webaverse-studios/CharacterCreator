@@ -5,15 +5,16 @@ import html2canvas from "html2canvas";
 import VRMExporter from "./VRMExporter";
 import { CullHiddenFaces } from './cull-mesh.js';
 import { combine } from "./merge-geometry";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 
-export const cullHiddenMeshes = (avatar, scene, avatarTemplateSpec) => {
+export const cullHiddenMeshes = (avatar) => {
   const models = [];
   for (const property in avatar) {
     const vrm = avatar[property].vrm;
-
     if (vrm) {
       const cullLayer = vrm.data.cullingLayer;
-      if (cullLayer >= 0) {
+      if (cullLayer >= 0) { 
         vrm.scene.traverse((child) => {
           if (child.isMesh) {
             child.userData.cullLayer = cullLayer;
@@ -24,33 +25,7 @@ export const cullHiddenMeshes = (avatar, scene, avatarTemplateSpec) => {
       }
     }
   }
-  const targets = avatarTemplateSpec.cullingModel;
-  if (targets) {
-    for (let i = 0; i < targets.length; i++) {
-      const obj = scene.getObjectByName(targets[i]);
-      if (obj != null) {
-
-        if (obj.isMesh) {
-          obj.userData.cullLayer = 0;
-          models.push(obj);
-          //DisplayMeshIfVisible(obj, traitModel);
-        }
-        if (obj.isGroup) {
-          obj.traverse((child) => {
-            if (child.parent === obj && child.isMesh) {
-              child.userData.cullLayer = 0;
-              models.push(child);
-              //DisplayMeshIfVisible(child, traitModel);
-            }
-          });
-        }
-      }
-      else {
-        console.warn(targets[i] + " not found");
-      }
-    }
-    CullHiddenFaces(models);
-  }
+  CullHiddenFaces(models);
 };
 
 export async function getModelFromScene(avatarScene, format = 'glb', skinColor = new THREE.Color(1, 1, 1)) {
@@ -299,6 +274,25 @@ export const createBoneDirection = (skinMesh) => {
   }
   geometry.userData.boneDirections = boneDirections;
 };
+
+export async function loadModel(file, onProgress) {
+  console.log('file is', file)
+  const gltfLoader = new GLTFLoader()
+  gltfLoader.register((parser) => {
+    return new VRMLoaderPlugin(parser)
+  })
+  return gltfLoader.loadAsync(file, onProgress).then((model) => {
+    console.log('model outis', model)
+    const vrm = model.userData.vrm
+    renameVRMBones(vrm)
+
+    vrm.scene?.traverse((child) => {
+      child.frustumCulled = false
+    })
+    return vrm
+  })
+}
+
 export const renameVRMBones = (vrm) => {
   const bones = vrm.humanoid.humanBones;
   for (const boneName in bones) {

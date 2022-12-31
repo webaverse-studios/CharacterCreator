@@ -15,8 +15,6 @@ window.THREE = THREE
 export default function Scene() {
   const {
     scene,
-    setScene,
-    setCamera,
     loadModel,
     currentTemplate,
     model,
@@ -24,7 +22,6 @@ export default function Scene() {
     setModel,
     traitsSpines,
     traitsNecks,
-    setCurrentTemplate,
     setLipSync,
   } = useContext(SceneContext)
   const {setCurrentView} = useContext(ViewContext)
@@ -35,7 +32,6 @@ export default function Scene() {
     right : 70,
   }
 
-  const [loading, setLoading] = useState(false)
   const templateInfo = template && currentTemplate && template[currentTemplate.index]
   const [neck, setNeck] = useState({});
   const [spine, setSpine] = useState({});
@@ -139,7 +135,7 @@ export default function Scene() {
     };
 
     // set a 30 fps interval
-    const interval = setInterval(update, frameRate);
+    setInterval(update, frameRate);
 
     // // add an equirectangular environment map to the scene using THREE (public/city.hdr)
     // const envMap = new THREE.TextureLoader().load("/city.hdr");
@@ -211,7 +207,7 @@ export default function Scene() {
         }
         });
 
-      getSkinColor(vrm.scene, templateInfo.bodyTargets)
+      // getSkinColor(vrm.scene, templateInfo.bodyTargets)
       setModel(vrm)
       setTimeout(() => {
       scene.add(vrm.scene)      
