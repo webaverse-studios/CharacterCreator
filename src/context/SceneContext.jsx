@@ -48,6 +48,7 @@ export const SceneProvider = (props) => {
         textures:[], 
         colors:[]    
       }
+      
 
       loadManager.onLoad = function (){
 
@@ -145,7 +146,7 @@ export const SceneProvider = (props) => {
   }
 
   const [template, setTemplate] = useState(null)
-  const [scene, setScene] = useState(new THREE.Scene())
+  const [scene, setScene] = useState(new THREE.Scene())   
   const [currentTraitName, setCurrentTraitName] = useState(null)
   const [currentOptions, setCurrentOptions] = useState([])
   const [model, setModel] = useState(null)
