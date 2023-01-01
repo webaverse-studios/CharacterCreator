@@ -118,20 +118,12 @@ export default function Selector() {
   useEffect(() => {
     if (selectedOptions.length > 0){
       loadTraitOptions(selectedOptions).then(traits=>{
-        console.log("loaded traits are: ", traits)
         let newAvatar = {};
         traits.map((trait)=>{
           newAvatar = {...newAvatar, ...trait}
         })
         setAvatar({...avatar, ...newAvatar})
       })
-      // loadOptions(selectedOptions).then((loadedData)=>{
-      //   let newAvatar = {};
-      //   loadedData.map((data)=>{
-      //     newAvatar = {...newAvatar, ...itemAssign(data)}
-      //   })
-      //   setAvatar({...avatar, ...newAvatar})
-      // })
       setSelectedOptions([]);
     }
 
@@ -145,11 +137,10 @@ export default function Selector() {
       }
     }
 
-    loadOptions([option]).then((loadedData)=>{
+    loadTraitOptions([option]).then(traits=>{
       let newAvatar = {};
-      
-      loadedData.map((data)=>{
-        newAvatar = {...newAvatar, ...itemAssign(data)}
+      traits.map((trait)=>{
+        newAvatar = {...newAvatar, ...trait}
       })
       setAvatar({...avatar, ...newAvatar})
     })
@@ -157,11 +148,20 @@ export default function Selector() {
     return;
   }
 
+  const removeTrait = (traitName) => {
+    if (avatar){
+      if (avatar[traitName] && avatar[traitName].vrm) {
+        //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
+          disposeVRM(avatar[traitName].vrm)
+      }
+      avatar[traitName] = {};
+    }
+  }
 
   const loadTraitOptions = (options)=>{
     
+
     options = filterRestrictedOptions(options);
-    console.log(options)
 
     //validate if there is at least a non null option
     let nullOptions = true;
@@ -171,9 +171,9 @@ export default function Selector() {
     })
 
     if (nullOptions === true){
-      return new Promise((resolve) => {
-        resolve(options.map((opt)=>opt.trait.name))
-      });
+        options.map((opt)=>{
+          removeTrait(opt.trait.name)
+        })
     }
 
     const baseDir = templateInfo.traitsDirectory
@@ -185,6 +185,11 @@ export default function Selector() {
         const textureDirectories = getAsArray(option.textureTrait?.directory).map((dir)=>baseDir + dir)
         promises[i] = loadTrait(baseDir + option.item.directory, textureDirectories, option.colorTrait?.value, option.item.meshTargets)
       }
+      else{
+        promises[i] = new Promise((resolve) => {
+            resolve(null)
+        });
+      }
     })
     
     return new Promise((resolve)=>{
@@ -193,27 +198,64 @@ export default function Selector() {
         // add models here
         const traitResult = vrms.map((vrm,i)=>{
           // option may come as null, as user may have chosen to remove trait
+          const item = options[i].item
+          const traitData = options[i].trait
           if (vrm){
             if (animationManager){
               animationManager.startAnimation(vrm)
             }
+
+              //     // basic vrm setup (only if model is vrm)
+            //setLipSync(new LipSync(vrm));
+            // culling layers setup section
+
+            addModelData(vrm, {
+              cullingLayer: 
+                item.cullingLayer != null ? item.cullingLayer: 
+                traitData.cullingLayer != null ? traitData.cullingLayer: 
+                templateInfo.defaultCullingLayer != null?templateInfo.defaultCullingLayer: -1,
+              cullingDistance: 
+                item.cullingDistance != null ? item.cullingDistance: 
+                traitData.cullingDistance != null ? traitData.cullingDistance:
+                templateInfo.defaultCullingDistance != null ? templateInfo.defaultCullingDistance: null,
+            })  
+
+            vrm.scene.traverse((child) => {
+      
+              // basic setup
+              child.frustumCulled = false
+              if (child.isMesh) {
+                if (child.geometry.boundsTree == null)
+                  child.geometry.computeBoundsTree({strategy:SAH});
+      
+                createFaceNormals(child.geometry)
+                if (child.isSkinnedMesh) createBoneDirection(child)
+              }
+              if (child.isBone && child.name == 'neck') { 
+                setTraitsNecks(current => [...current , child])
+              }
+              if (child.isBone && child.name == 'spine') { 
+                setTraitsSpines(current => [...current , child])
+              }
+              if (child.isBone && child.name === 'leftEye') { 
+                setTraitsLeftEye(current => [...current , child])
+              }
+              if (child.isBone && child.name === 'rightEye') { 
+                setTraitsRightEye(current => [...current , child])
+              }
+            })
 
             // add to scene
             model.add(vrm.scene)
           }
           
           // remove old data
-          if (avatar){
-            if (avatar[options[i].trait.name] && avatar[options[i].trait.name].vrm) {
-              //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
-                disposeVRM(avatar[options[i].trait.name].vrm)
-            }
-          }
+          removeTrait(traitData.name)
 
           // and return data of new loaded traits
-          return {[options[i].trait.name]: {
-            traitInfo: options[i].item,
-            name: options[i].name,
+          return {[traitData.name]: {
+            traitInfo: item,
+            name: item.name,
             model: vrm?.scene,
             vrm: vrm,
             }
@@ -227,96 +269,96 @@ export default function Selector() {
   }
   
   // load options first
-  const loadOptions = (options) => {
-    // filter options by restrictions
-    options = filterRestrictedOptions(options);
+  // const loadOptions = (options) => {
+  //   // filter options by restrictions
+  //   options = filterRestrictedOptions(options);
 
-    // validate if there is at least a non null option
-    let nullOptions = true;
-    options.map((option)=>{
-      if(option.item != null)
-        nullOptions = false;
-    })
-    if (nullOptions === true){
-      return new Promise((resolve) => {
-        resolve(options)
-      });
-    }
+  //   // validate if there is at least a non null option
+  //   let nullOptions = true;
+  //   options.map((option)=>{
+  //     if(option.item != null)
+  //       nullOptions = false;
+  //   })
+  //   if (nullOptions === true){
+  //     return new Promise((resolve) => {
+  //       resolve(options)
+  //     });
+  //   }
 
-    //create the manager for all the options
-    const loadingManager = new THREE.LoadingManager()
+  //   //create the manager for all the options
+  //   const loadingManager = new THREE.LoadingManager()
 
-    //create a gltf loader for the 3d models
-    const gltfLoader = new GLTFLoader(loadingManager)
-    gltfLoader.register((parser) => {
-      return new VRMLoaderPlugin(parser)
-    })
+  //   //create a gltf loader for the 3d models
+  //   const gltfLoader = new GLTFLoader(loadingManager)
+  //   gltfLoader.register((parser) => {
+  //     return new VRMLoaderPlugin(parser)
+  //   })
 
 
 
-    // and a texture loaders for all the textures
-    const textureLoader = new THREE.TextureLoader(loadingManager)
-    loadingManager.onProgress = function(url, loaded, total){
-      setLoadPercentage(Math.round(loaded/total * 100 ))
-    }
-    // return a promise, resolve = once everything is loaded
+  //   // and a texture loaders for all the textures
+  //   const textureLoader = new THREE.TextureLoader(loadingManager)
+  //   loadingManager.onProgress = function(url, loaded, total){
+  //     setLoadPercentage(Math.round(loaded/total * 100 ))
+  //   }
+  //   // return a promise, resolve = once everything is loaded
 
-    return new Promise((resolve) => {
+  //   return new Promise((resolve) => {
 
-      // resultData will hold all the results in the array that was given this function
-      const resultData = [];
-      loadingManager.onLoad = function (){
-        setLoadPercentage(0)
-        resolve(resultData);
-      };
-      loadingManager.onError = function (url){
-        console.warn("error loading " + url)
-      }
-      loadingManager.onProgress = function(url, loaded, total){
-        setLoadPercentage(Math.round(loaded/total * 100 ))
-      }
+  //     // resultData will hold all the results in the array that was given this function
+  //     const resultData = [];
+  //     loadingManager.onLoad = function (){
+  //       setLoadPercentage(0)
+  //       resolve(resultData);
+  //     };
+  //     loadingManager.onError = function (url){
+  //       console.warn("error loading " + url)
+  //     }
+  //     loadingManager.onProgress = function(url, loaded, total){
+  //       setLoadPercentage(Math.round(loaded/total * 100 ))
+  //     }
 
-      const baseDir = templateInfo.traitsDirectory// (maybe set in loading manager)
+  //     const baseDir = templateInfo.traitsDirectory// (maybe set in loading manager)
       
-      // load necesary assets for the options
-      options.map((option, index)=>{
-        setSelectValue(option.key)
-        if (option == null){
-          resultData[index] = null;
-          return;
-        }
-        // load model trait
-        const loadedModels = []; 
-        getAsArray(option?.item?.directory).map((modelDir, i)=>{
-          gltfLoader.loadAsync (baseDir + modelDir).then((mod)=>{
-            loadedModels[i] = mod;
-          })
-        })
+  //     // load necesary assets for the options
+  //     options.map((option, index)=>{
+  //       setSelectValue(option.key)
+  //       if (option == null){
+  //         resultData[index] = null;
+  //         return;
+  //       }
+  //       // load model trait
+  //       const loadedModels = []; 
+  //       getAsArray(option?.item?.directory).map((modelDir, i)=>{
+  //         gltfLoader.loadAsync (baseDir + modelDir).then((mod)=>{
+  //           loadedModels[i] = mod;
+  //         })
+  //       })
         
-        // load texture trait
-        const loadedTextures = []; 
-        getAsArray(option?.textureTrait?.directory).map((textureDir, i)=>{
-          textureLoader.load(baseDir + textureDir,(txt)=>{
-            txt.flipY = false;
-            loadedTextures[i] = (txt)
-          })
-        })
+  //       // load texture trait
+  //       const loadedTextures = []; 
+  //       getAsArray(option?.textureTrait?.directory).map((textureDir, i)=>{
+  //         textureLoader.load(baseDir + textureDir,(txt)=>{
+  //           txt.flipY = false;
+  //           loadedTextures[i] = (txt)
+  //         })
+  //       })
 
-        // and just create colors
-        const loadedColors = [];
-        getAsArray(option?.colorTrait?.value).map((colorValue, i)=>{
-          loadedColors[i] = new THREE.Color(colorValue);
-        })
-        resultData[index] = {
-          item:option?.item,
-          trait:option?.trait,
-          models:loadedModels,          
-          textures:loadedTextures, 
-          colors:loadedColors      
-        }
-      })
-    });
-  }
+  //       // and just create colors
+  //       const loadedColors = [];
+  //       getAsArray(option?.colorTrait?.value).map((colorValue, i)=>{
+  //         loadedColors[i] = new THREE.Color(colorValue);
+  //       })
+  //       resultData[index] = {
+  //         item:option?.item,
+  //         trait:option?.trait,
+  //         models:loadedModels,          
+  //         textures:loadedTextures, 
+  //         colors:loadedColors      
+  //       }
+  //     })
+  //   });
+  // }
 
   const filterRestrictedOptions = (options) =>{
     let removeTraits = [];
@@ -395,139 +437,139 @@ export default function Selector() {
 
 
   // once loaded, assign
-  const itemAssign = (itemData) => {
+  // const itemAssign = (itemData) => {
 
-    const item = itemData.item;
-    const traitData = itemData.trait;
-    const models = itemData.models;
-    const textures = itemData.textures;
-    const colors = itemData.colors;
-    // null section (when user selects to remove an option)
-    if ( item == null && avatar) {
-      if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
-        disposeVRM(avatar[traitData.name].vrm)
-        setSelectValue("")
-      }
-      return {
-        [traitData.name]: {}
-      }
-    }
+  //   const item = itemData.item;
+  //   const traitData = itemData.trait;
+  //   const models = itemData.models;
+  //   const textures = itemData.textures;
+  //   const colors = itemData.colors;
+  //   // null section (when user selects to remove an option)
+  //   if ( item == null && avatar) {
+  //     if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
+  //       disposeVRM(avatar[traitData.name].vrm)
+  //       setSelectValue("")
+  //     }
+  //     return {
+  //       [traitData.name]: {}
+  //     }
+  //   }
 
-    // save an array of mesh targets
-    const meshTargets = [];
+  //   // save an array of mesh targets
+  //   const meshTargets = [];
     
 
-    // add culling data to each model TODO,  if user defines target culling meshes set them before here
-    // models are vrm in some cases!, beware
-    const vrms = []
-    models.map((m)=>{
-      // basic vrm setup (only if model is vrm)
-      const vrm = m.userData.vrm;
-      setLipSync(new LipSync(vrm));
-      renameVRMBones(vrm)
+  //   // add culling data to each model TODO,  if user defines target culling meshes set them before here
+  //   // models are vrm in some cases!, beware
+  //   const vrms = []
+  //   models.map((m)=>{
+  //     // basic vrm setup (only if model is vrm)
+  //     const vrm = m.userData.vrm;
+  //     setLipSync(new LipSync(vrm));
+  //     renameVRMBones(vrm)
 
-      vrms.push(vrm);
-      // animation setup section
-      // play animations on this vrm  TODO, letscreate a single animation manager per traitInfo, as model may change since it is now a trait option
-      if (animationManager){
-        animationManager.startAnimation(vrm)
-      }
+  //     vrms.push(vrm);
+  //     // animation setup section
+  //     // play animations on this vrm  TODO, letscreate a single animation manager per traitInfo, as model may change since it is now a trait option
+  //     if (animationManager){
+  //       animationManager.startAnimation(vrm)
+  //     }
 
-      // culling layers setup section
+  //     // culling layers setup section
 
-      addModelData(vrm, {
-        cullingLayer: 
-          item.cullingLayer != null ? item.cullingLayer: 
-          traitData.cullingLayer != null ? traitData.cullingLayer: 
-          templateInfo.defaultCullingLayer != null?templateInfo.defaultCullingLayer: -1,
-        cullingDistance: 
-          item.cullingDistance != null ? item.cullingDistance: 
-          traitData.cullingDistance != null ? traitData.cullingDistance:
-          templateInfo.defaultCullingDistance != null ? templateInfo.defaultCullingDistance: null,
-      })  
+  //     addModelData(vrm, {
+  //       cullingLayer: 
+  //         item.cullingLayer != null ? item.cullingLayer: 
+  //         traitData.cullingLayer != null ? traitData.cullingLayer: 
+  //         templateInfo.defaultCullingLayer != null?templateInfo.defaultCullingLayer: -1,
+  //       cullingDistance: 
+  //         item.cullingDistance != null ? item.cullingDistance: 
+  //         traitData.cullingDistance != null ? traitData.cullingDistance:
+  //         templateInfo.defaultCullingDistance != null ? templateInfo.defaultCullingDistance: null,
+  //     })  
 
-      // mesh target setup section
-      if (item.meshTargets){
-        getAsArray(item.meshTargets).map((target) => {
-          const mesh = vrm.scene.getObjectByName ( target )
-          if (mesh?.isMesh) meshTargets.push(mesh);
-        })
-      }
+  //     // mesh target setup section
+  //     if (item.meshTargets){
+  //       getAsArray(item.meshTargets).map((target) => {
+  //         const mesh = vrm.scene.getObjectByName ( target )
+  //         if (mesh?.isMesh) meshTargets.push(mesh);
+  //       })
+  //     }
       
-      vrm.scene.traverse((child) => {
+  //     vrm.scene.traverse((child) => {
         
-        // mesh target setup secondary swection
-        if (!item.meshTargets && child.isMesh) meshTargets.push(child);
+  //       // mesh target setup secondary swection
+  //       if (!item.meshTargets && child.isMesh) meshTargets.push(child);
 
-        // basic setup
-        child.frustumCulled = false
-        if (child.isMesh) {
-          if (child.geometry.boundsTree == null)
-            child.geometry.computeBoundsTree({strategy:SAH});
+  //       // basic setup
+  //       child.frustumCulled = false
+  //       if (child.isMesh) {
+  //         if (child.geometry.boundsTree == null)
+  //           child.geometry.computeBoundsTree({strategy:SAH});
 
-          createFaceNormals(child.geometry)
-          if (child.isSkinnedMesh) createBoneDirection(child)
-        }
-        if (child.isBone && child.name == 'neck') { 
-          setTraitsNecks(current => [...current , child])
-        }
-        if (child.isBone && child.name == 'spine') { 
-          setTraitsSpines(current => [...current , child])
-        }
-        if (child.isBone && child.name === 'leftEye') { 
-          setTraitsLeftEye(current => [...current , child])
-        }
-        if (child.isBone && child.name === 'rightEye') { 
-          setTraitsRightEye(current => [...current , child])
-        }
-      })
-      // add the now model to the current scene
-      model.add(vrm.scene)
+  //         createFaceNormals(child.geometry)
+  //         if (child.isSkinnedMesh) createBoneDirection(child)
+  //       }
+  //       if (child.isBone && child.name == 'neck') { 
+  //         setTraitsNecks(current => [...current , child])
+  //       }
+  //       if (child.isBone && child.name == 'spine') { 
+  //         setTraitsSpines(current => [...current , child])
+  //       }
+  //       if (child.isBone && child.name === 'leftEye') { 
+  //         setTraitsLeftEye(current => [...current , child])
+  //       }
+  //       if (child.isBone && child.name === 'rightEye') { 
+  //         setTraitsRightEye(current => [...current , child])
+  //       }
+  //     })
+  //     // add the now model to the current scene
+  //     model.add(vrm.scene)
       
-    })
+  //   })
 
-    // once the setup is done, assign them
-    meshTargets.map((mesh, index)=>{
-      if (textures){
-        const txt = textures[index] || textures[0]
-        if (txt != null){
-          mesh.material[0].map = txt
-          mesh.material[0].shadeMultiplyTexture = txt
-        }
-      }
-      if (colors){
-        const col = colors[index] || colors[0]
-        if (col != null){
-          mesh.material[0].uniforms.litFactor.value = col
-          mesh.material[0].uniforms.shadeColorFactor.value = new THREE.Color( col.r*0.8, col.g*0.8, col.b*0.8 )
-        }
-      }
-    })
+  //   // once the setup is done, assign them
+  //   meshTargets.map((mesh, index)=>{
+  //     if (textures){
+  //       const txt = textures[index] || textures[0]
+  //       if (txt != null){
+  //         mesh.material[0].map = txt
+  //         mesh.material[0].shadeMultiplyTexture = txt
+  //       }
+  //     }
+  //     if (colors){
+  //       const col = colors[index] || colors[0]
+  //       if (col != null){
+  //         mesh.material[0].uniforms.litFactor.value = col
+  //         mesh.material[0].uniforms.shadeColorFactor.value = new THREE.Color( col.r*0.8, col.g*0.8, col.b*0.8 )
+  //       }
+  //     }
+  //   })
     
-    // if there was a previous loaded model, remove it (maybe also remove loaded textures?)
-    if (avatar){
-      if (avatar[traitData.name] && avatar[traitData.name].vrm) {
-        //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
-          disposeVRM(avatar[traitData.name].vrm)
-      }
-    }
+  //   // if there was a previous loaded model, remove it (maybe also remove loaded textures?)
+  //   if (avatar){
+  //     if (avatar[traitData.name] && avatar[traitData.name].vrm) {
+  //       //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
+  //         disposeVRM(avatar[traitData.name].vrm)
+  //     }
+  //   }
     
 
-    // and then add the new avatar data
-    // to do, we are now able to load multiple vrm models per options, set the options to include vrm arrays
-    return {
-      [traitData.name]: {
-        traitInfo: item,
-        name: item.name,
-        model: vrms[0]?.scene,
-        vrm: vrms[0],
-      }
-    }
-    //setAvatar({...avatar, ...newTrait})
+  //   // and then add the new avatar data
+  //   // to do, we are now able to load multiple vrm models per options, set the options to include vrm arrays
+  //   return {
+  //     [traitData.name]: {
+  //       traitInfo: item,
+  //       name: item.name,
+  //       model: vrms[0]?.scene,
+  //       vrm: vrms[0],
+  //     }
+  //   }
+  //   //setAvatar({...avatar, ...newTrait})
 
-    //console.log("AVATAR IS: ", avatar)
+  //   //console.log("AVATAR IS: ", avatar)
 
-  }
+  // }
 
   const [play] = useSound(sectionClick, { volume: 1.0 })
 

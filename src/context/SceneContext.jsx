@@ -18,8 +18,6 @@ export const SceneProvider = (props) => {
     return new VRMLoaderPlugin(parser)
   })
 
-  const textureLoader = new THREE.TextureLoader()
-
   function getAsArray(target){
     if (target == null) return []
     return Array.isArray(target) ? target : [target]
@@ -36,6 +34,7 @@ export const SceneProvider = (props) => {
     const txtrLoader = new THREE.TextureLoader(loadManager)
     
     // promise will fullfill when all assets necessary for this traits are loaded
+    // returns a vrm file with attached textures/colors to target meshes/ all meshe if null
     return new Promise((resolve) => {
 
       // resultData will hold all the results in the array that was given this function
@@ -88,6 +87,7 @@ export const SceneProvider = (props) => {
         console.warn("error loading " + url)
       }
 
+      // load model
       gltfLoad.load(modelFile,(m)=>{
         const vrm = m.userData.vrm
         renameVRMBones(vrm)
@@ -103,6 +103,7 @@ export const SceneProvider = (props) => {
         resultData.vrm = vrm
       })  
 
+      // load textures
       getAsArray(textureFiles).map((textureDir, i)=>{
         txtrLoader.load(textureDir,(txt)=>{
           txt.flipY = false;
@@ -110,6 +111,7 @@ export const SceneProvider = (props) => {
         })
       })
         
+      // load colors
       getAsArray(colors).map((colorValue, i)=>{
         console.log(colorValue)
         resultData.colors[i] = new THREE.Color(colorValue);
