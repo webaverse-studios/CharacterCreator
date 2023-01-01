@@ -16,33 +16,43 @@ import ChatComponent from "./ChatComponent"
 import Blinker from "./Blinker"
 
 import AudioButton from "./AudioButton"
-import { LipSync } from '../library/lipsync'
+
+import MintPopup from "./MintPopup"
 
 export default function Scene() {
   const {
     scene,
     setScene,
     setCamera,
-    loadModel,
     currentTemplate,
+    setSelectedRandomTraits,
     model,
+    setAnimationManager,
     template,
     setModel,
     traitsSpines,
     traitsNecks,
+
     controls,
     setControls,
     setLipSync,
+
+    traitsLeftEye,
+    traitsRightEye,
+    setCurrentTemplate,
+    getAsArray
+
   } = useContext(SceneContext)
-  const {setCurrentView} = useContext(ViewContext)
+  const {currentView, setCurrentView} = useContext(ViewContext)
   const maxLookPercent = {
     neck : 30,
     spine : 5,
-    left : 70,
-    right : 70,
+    left : 60,
+    right : 60,
   }
 
   const [loading, setLoading] = useState(false)
+
   const templateInfo = template && template[currentTemplate.index]
   console.log('currentTemplate', currentTemplate)
   console.log('currentTemplate.index', currentTemplate.index)
@@ -54,6 +64,11 @@ export default function Scene() {
   const [platform, setPlatform] = useState(null);
   const [blinker, setBlinker] = useState(null);
   const [animationMixer, setAnimationMixer] = useState(null);
+
+
+  const controls = useRef()
+  const templateInfo = template && currentTemplate && template[currentTemplate.index]
+  const [platform, setPlatform] = useState(null);
 
   const [showChat, setShowChat] = useState(false);
 
@@ -70,6 +85,7 @@ export default function Scene() {
     // if user presses ctrl h, show chat
     const handleKeyDown = (e) => {
       if (e.ctrlKey && e.key === 'h') {
+        console.log("pressed h")
         e.preventDefault();
         setShowChat(!showChat);
       }
@@ -123,18 +139,18 @@ export default function Scene() {
   }
 
   const handleMouseMove = (event) => {
-    if (neck && spine && left && right) {
-      moveJoint(event, neck, maxLookPercent.neck);
-      moveJoint(event, spine, maxLookPercent.spine);
-      moveJoint(event, left, maxLookPercent.left);
-      moveJoint(event, right, maxLookPercent.right);
-    }
-    if(traitsNecks.length !== 0 && traitsSpines.length !== 0){
+    if(traitsNecks.length !== 0 && traitsSpines.length !== 0 && traitsLeftEye.length !==0 && traitsLeftEye !== 0){
       traitsNecks.map((neck) => {
         moveJoint(event, neck, maxLookPercent.neck);
       })
       traitsSpines.map((spine) => {
         moveJoint(event, spine, maxLookPercent.spine);
+      })
+      traitsLeftEye.map((leftEye) => {
+        moveJoint(event, leftEye, maxLookPercent.left);
+      })
+      traitsRightEye.map((rightEye) => {
+        moveJoint(event, rightEye, maxLookPercent.right);
       })
     }
   };
@@ -231,6 +247,38 @@ export default function Scene() {
     // start the animation loop
     animate();
 
+  //check this part too
+    // create animation manager
+    async function fetchAssets() {
+      if(model != null && scene != null) {
+        scene.remove(model)
+      }
+      // model holds only the elements that will be exported
+      const avatarModel = new THREE.Scene()
+      setModel(avatarModel)
+      // scene hold all the elements cinluding model
+      const newScene = new THREE.Scene();
+      setScene(newScene)
+
+      newScene.add(avatarModel)  
+
+      // create an animation manager for all the traits that will be loaded
+      const newAnimationManager = new AnimationManager(templateInfo.offset)
+      setAnimationManager(newAnimationManager);
+      if (templateInfo.animationPath)
+        await newAnimationManager.loadAnimations(templateInfo.animationPath)
+
+      // load assets
+      const initialTraits = [...new Set([...getAsArray(templateInfo.requiredTraits), ...getAsArray(templateInfo.randomTraits)])]
+      setSelectedRandomTraits(initialTraits);
+
+      setCurrentView(ViewStates.CREATOR)
+    }
+    fetchAssets();
+    
+    
+
+    // load environment
 
     const modelPath = "/3d/Platform.glb";
 
@@ -250,8 +298,9 @@ export default function Scene() {
 
     });
 
-    console.log('currentTemplate.model is', currentTemplate.model)
 
+    console.log('currentTemplate.model is', currentTemplate.model)
+  // check this part
     loadModel(currentTemplate.model).then(async (vrm) => { 
       const animationManager = new AnimationManager(templateInfo.offset)
       addModelData(vrm, { animationManager: animationManager })
@@ -306,4 +355,5 @@ export default function Scene() {
   }, [templateInfo])
 
   return <></>
+
 }
