@@ -10,8 +10,9 @@ import { SceneContext } from "../context/SceneContext";
 
 import styles from './Editor.module.css';
 
+
 export default function Editor({templateInfo, controls}) {
-  const {currentTraitName, setCurrentTraitName, setCurrentOptions, setSelectedOptions, setSelectedRandomTraits, selectedRandomTraits} = useContext(SceneContext);
+  const {currentTraitName, setCurrentTraitName, setCurrentOptions, setSelectedOptions, setSelectedRandomTraits, selectedRandomTraits, controls} = useContext(SceneContext);
 
   const {isMute} = useContext(AudioContext);
 
@@ -138,6 +139,7 @@ export default function Editor({templateInfo, controls}) {
 
 
   const moveCamera = (value) => {
+    if(!controls) return;
       gsap.to(controls.target,{
         y:value.height,
         duration: 1,

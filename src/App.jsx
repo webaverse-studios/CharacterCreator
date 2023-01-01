@@ -16,9 +16,29 @@ import MintPopup from "./components/MintPopup"
 
 // dynamically import the manifest
 const assetImportPath = import.meta.env.VITE_ASSET_PATH + "/manifest.json"
+const dropHunter = "../3d/models/landing/drop-noWeapon.vrm"
+const neuroHacker = "../3d/models/landing/neuro-noWeapon.vrm"
+
+const anim_drophunter = "../3d/animations/idle_drophunter.fbx"
+const anim_neurohacker = "../3d/animations/idle_neurohacker.fbx"
+
+const Classes = {
+  DROPHUNTER: {
+    index: 0,
+    model: dropHunter,
+    text: "Dropunter",
+    animation: anim_drophunter,
+  },
+  NEUROHACKER: {
+    index: 1,
+    model: neuroHacker,
+    text: "Neurohacker",
+    animation: anim_neurohacker,
+  },
+}
 
 function App() {
-  const { template, setTemplate } = useContext(SceneContext)
+  const { template, setTemplate, setCurrentTemplate } = useContext(SceneContext)
   const { setCurrentView } = useContext(ViewContext)
   // fetch the manifest, then set it
   useEffect(() => {
@@ -29,8 +49,10 @@ function App() {
     }
 
     fetchManifest().then((data) => {
+      setCurrentView(ViewStates.CREATOR_LOADING)
+      console.log('data', data)
       setTemplate(data)
-      setCurrentView(ViewStates.LANDER_LOADING)
+      setCurrentTemplate(Classes.DROPHUNTER)
     })
   }, [])
   return (

@@ -1,26 +1,19 @@
 /* eslint-disable react/no-unknown-property */
-import { Environment } from "@react-three/drei/core/Environment"
-import { OrbitControls } from "@react-three/drei/core/OrbitControls"
-import { PerspectiveCamera } from "@react-three/drei/core/PerspectiveCamera"
-import { Canvas } from "@react-three/fiber"
-import {
-  Bloom,
-  EffectComposer
-} from "@react-three/postprocessing"
 import React, { useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
-import { NoToneMapping } from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { SceneContext } from "../context/SceneContext"
 import { ViewContext, ViewStates } from "../context/ViewContext"
 import { AnimationManager } from "../library/animationManager"
 import { addModelData, getSkinColor } from "../library/utils"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+
 import { BackButton } from "./BackButton"
 import Editor from "./Editor"
 import styles from "./Scene.module.css"
 import Selector from "./Selector"
-import { VRM, VRMExpressionPresetName, VRMHumanBoneName } from "@pixiv/three-vrm";
 import ChatComponent from "./ChatComponent"
+import Blinker from "./Blinker"
 
 import AudioButton from "./AudioButton"
 
@@ -39,10 +32,16 @@ export default function Scene() {
     setModel,
     traitsSpines,
     traitsNecks,
+
+    controls,
+    setControls,
+    setLipSync,
+
     traitsLeftEye,
     traitsRightEye,
     setCurrentTemplate,
     getAsArray
+
   } = useContext(SceneContext)
   const {currentView, setCurrentView} = useContext(ViewContext)
   const maxLookPercent = {
@@ -53,10 +52,34 @@ export default function Scene() {
   }
 
   const [loading, setLoading] = useState(false)
+
+  const templateInfo = template && template[currentTemplate.index]
+  console.log('currentTemplate', currentTemplate)
+  console.log('currentTemplate.index', currentTemplate.index)
+  console.log('templateInfo', templateInfo)
+  const [neck, setNeck] = useState({});
+  const [spine, setSpine] = useState({});
+  const [left, setLeft] = useState({});
+  const [right, setRight] = useState({});
+  const [platform, setPlatform] = useState(null);
+  const [blinker, setBlinker] = useState(null);
+  const [animationMixer, setAnimationMixer] = useState(null);
+
+
   const controls = useRef()
   const templateInfo = template && currentTemplate && template[currentTemplate.index]
   const [platform, setPlatform] = useState(null);
+
   const [showChat, setShowChat] = useState(false);
+
+  const updateBlinker = () => {
+    if(blinker){
+      blinker.update(Date.now());
+    } else {
+     // console.log('no blinker')
+    }
+  }
+
 
   useEffect(() => {
     // if user presses ctrl h, show chat
@@ -144,11 +167,87 @@ export default function Scene() {
   }
 
   useEffect(() => {
-    if(!templateInfo) {
-      if(!loading) setLoading(true)
-      return
-    }
+    setScene(new THREE.Scene());
+    const frameRate = 1000/30;
+    // start an update loop
+    const update = () => {
+      updateBlinker();
+      animationMixer?.update(frameRate);
+      if(controls) controls.update();
+    };
 
+    // set a 30 fps interval
+    const interval = setInterval(update, frameRate);
+
+    // add an equirectangular environment map to the scene using THREE (public/city.hdr)
+    const envMap = new THREE.TextureLoader().load("/city.hdr");
+
+    // add an ambient light to the scene with an intensity of 0.5
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+
+    // add a directional light to the scene with an intensity of 0.5
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+
+    // add the directional light to the scene
+    scene.add(directionalLight);
+
+    // add the ambient light to the scene
+    scene.add(ambientLight);
+
+    // add a camera to the scene
+    const camera = new THREE.PerspectiveCamera(
+      30,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+
+    // set the camera position
+    camera.position.set(0, 1.3, 2);
+
+    // TODO make sure to kill the interval
+
+      // find editor-scene canvas
+      const canvasRef = document.getElementById("editor-scene");
+
+    // create a new renderer
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvasRef,
+      antialias: true,
+      alpha: true,
+    });
+
+    // set the renderer size
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // set the renderer pixel ratio
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    // set the renderer output encoding
+    renderer.outputEncoding = THREE.sRGBEncoding;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.minDistance = 1.5;
+    controls.maxDistance = 1.5;
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI / 2 - 0.1;
+    controls.enablePan = true;
+    controls.target = new THREE.Vector3(0, 0.9, 0);
+    
+   
+    setControls(controls);
+
+    // start animation frame loop to render
+    const animate = () => {
+      requestAnimationFrame(animate);
+      controls?.update();
+      renderer.render(scene, camera);
+    };
+
+    // start the animation loop
+    animate();
+
+  //check this part too
     // create animation manager
     async function fetchAssets() {
       if(model != null && scene != null) {
@@ -188,92 +287,73 @@ export default function Scene() {
     loader.load(modelPath, (gltf) => {
       // setPlatform on the gltf, and play the first animation
       setPlatform(gltf.scene);
-
-      const animationMixer = new THREE.AnimationMixer(gltf.scene);
+      const am = new THREE.AnimationMixer(gltf.scene);
+      setAnimationMixer(am);
 
       // for each animation in the gltf, add it to the animation mixer
       gltf.animations.forEach((clip) => {
-        animationMixer.clipAction(clip).play();
+        am.clipAction(clip).play();
       }
       );
 
-      setInterval(() => {
-        animationMixer.update(0.0005);
-      });
-
     });
-    // move to selector
+
+
+    console.log('currentTemplate.model is', currentTemplate.model)
+  // check this part
+    loadModel(currentTemplate.model).then(async (vrm) => { 
+      const animationManager = new AnimationManager(templateInfo.offset)
+      addModelData(vrm, { animationManager: animationManager })
+
+      if (templateInfo.animationPath) {
+        await animationManager.loadAnimations(templateInfo.animationPath)
+        animationManager.startAnimation(vrm)
+      }
+      addModelData(vrm, { cullingLayer: 0 })
+
+      console.log('vrm', vrm)
+
+      setLipSync(new LipSync(vrm));
+      
+      setBlinker(new Blinker(vrm));
+
+      vrm.scene.traverse(o => {
+          if (o.isMesh) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+          }
+          // Reference the neck and spine bones
+          if (o.isBone && o.name === 'neck') { 
+            setNeck(o);
+          }
+          if (o.isBone && o.name === 'spine') { 
+             setSpine(o);
+          }
+          if (o.isBone && o.name === 'leftEye') { 
+            setLeft(o);
+         }
+         if (o.isBone && o.name === 'rightEye') { 
+          setRight(o);
+        }
+        });
+
+      getSkinColor(vrm.scene, templateInfo.bodyTargets)
+      setModel(vrm)
+      setTimeout(() => {
+      scene.add(vrm.scene)      
+    }, 1)
+      setCurrentView(ViewStates.CREATOR)
+    })
     
+    return () => {
+      if(model !== null) {
+        scene.remove(model.scene)
+      }
+      setModel(null)
+    }
+
   }, [templateInfo])
 
-  return templateInfo && platform && (
-      <div className={styles["FitParentContainer"]}>
-        <BackButton onClick={() => {
-          setCurrentTemplate(null)
-          setCurrentView(ViewStates.LANDER_LOADING)
-        }}/>
-        <AudioButton />
+  return <></>
 
-          <Canvas
-            id="editor-scene"
-            className={styles["canvasStyle"]}
-            gl={{ antialias: true, toneMapping: NoToneMapping }}
-            camera={{ fov: 30, position: [0, 1.3, 2] }}
-          >
-
-          <EffectComposer>
-          <Bloom luminanceThreshold={0.99} luminanceSmoothing={0.9} radius={1} />
-          </EffectComposer>
-
-          <Environment files="/city.hdr" />
-            <ambientLight color={[1, 1, 1]} intensity={0.5} />
-
-            <directionalLight
-              intensity={0.5}
-              position={[3, 1, 5]}
-              shadow-mapSize={[1024, 1024]}
-            >
-              <orthographicCamera
-                attach="shadow-camera"
-                left={-20}
-                right={20}
-                top={20}
-                bottom={-20}
-              />
-            </directionalLight>
-
-            <OrbitControls
-              ref={controls}
-              minDistance={1}
-              maxDistance={4}
-              maxPolarAngle={Math.PI / 2 - 0.1}
-              enablePan={true}
-              autoRotateSpeed={5}
-              enableDamping={true}
-              dampingFactor={0.1}
-              target={[0, 1.1, 0]}
-            />
-
-            <PerspectiveCamera
-              ref={setCamera}
-              aspect={1200 / 600}
-              fov={30}
-              onUpdate={(self) => self.updateProjectionMatrix()}
-            >
-            <mesh>
-              <primitive object={scene} />
-            </mesh>
-
-            <mesh>
-              <primitive object={platform} />
-            </mesh>
-
-            </PerspectiveCamera>
-          </Canvas>
-          { currentView.includes("MINT") && <MintPopup />}
-          {showChat && <ChatComponent />}
-          {!showChat && <Editor templateInfo={templateInfo} controls={controls.current} />}
-          {!showChat && currentTemplate && templateInfo && <Selector templateInfo={templateInfo} />}
-      </div>
-  )
 }
