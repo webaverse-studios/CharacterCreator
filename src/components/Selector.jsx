@@ -117,7 +117,14 @@ export default function Selector() {
   // options are selected by random or start
   useEffect(() => {
     if (selectedOptions.length > 0){
-      loadTraitOptions(selectedOptions).then(traitNames=>{console.log("loaded traits are: ", traitNames)})
+      loadTraitOptions(selectedOptions).then(traits=>{
+        console.log("loaded traits are: ", traits)
+        let newAvatar = {};
+        traits.map((trait)=>{
+          newAvatar = {...newAvatar, ...trait}
+        })
+        setAvatar({...avatar, ...newAvatar})
+      })
       // loadOptions(selectedOptions).then((loadedData)=>{
       //   let newAvatar = {};
       //   loadedData.map((data)=>{
@@ -184,13 +191,35 @@ export default function Selector() {
       Promise.all(promises).then((vrms)=>{
         console.log("result data is: ", vrms)
         // add models here
-        vrms.map((vrm)=>{
-          if (animationManager){
-            animationManager.startAnimation(vrm)
+        const traitResult = vrms.map((vrm,i)=>{
+          // option may come as null, as user may have chosen to remove trait
+          if (vrm){
+            if (animationManager){
+              animationManager.startAnimation(vrm)
+            }
+
+            // add to scene
+            model.add(vrm.scene)
           }
-          model.add(vrm.scene)
+          
+          // remove old data
+          if (avatar){
+            if (avatar[options[i].trait.name] && avatar[options[i].trait.name].vrm) {
+              //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
+                disposeVRM(avatar[options[i].trait.name].vrm)
+            }
+          }
+
+          // and return data of new loaded traits
+          return {[options[i].trait.name]: {
+            traitInfo: options[i].item,
+            name: options[i].name,
+            model: vrm?.scene,
+            vrm: vrm,
+            }
+          }
         })
-        resolve(options.map((opt)=>opt.trait.name))
+        resolve(traitResult)
       }).catch((e)=>{
         console.error(e)
       })
