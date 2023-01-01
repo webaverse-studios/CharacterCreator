@@ -23,7 +23,7 @@ import { VRM, VRMExpressionPresetName, VRMHumanBoneName } from "@pixiv/three-vrm
 import ChatComponent from "./ChatComponent"
 
 import AudioButton from "./AudioButton"
-import { LipSync } from '../library/lipsync'
+
 import MintPopup from "./MintPopup"
 
 export default function Scene() {
@@ -31,7 +31,6 @@ export default function Scene() {
     scene,
     setScene,
     setCamera,
-    loadModel,
     currentTemplate,
     setSelectedRandomTraits,
     model,
@@ -43,7 +42,6 @@ export default function Scene() {
     traitsLeftEye,
     traitsRightEye,
     setCurrentTemplate,
-    setLipSync,
     getAsArray
   } = useContext(SceneContext)
   const {currentView, setCurrentView} = useContext(ViewContext)
@@ -205,7 +203,6 @@ export default function Scene() {
 
     });
     // move to selector
-    //setLipSync(new LipSync(vrm));
     
   }, [templateInfo])
 

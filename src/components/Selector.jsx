@@ -41,7 +41,8 @@ export default function Selector() {
     setTraitsLeftEye,
     setTraitsRightEye,
     getAsArray,
-    setLipSync
+    setLipSync,
+    loadTrait
   } = useContext(SceneContext)
   const currentTemplateIndex = parseInt(currentTemplate.index)
   const templateInfo = template[currentTemplateIndex]
@@ -116,13 +117,14 @@ export default function Selector() {
   // options are selected by random or start
   useEffect(() => {
     if (selectedOptions.length > 0){
-      loadOptions(selectedOptions).then((loadedData)=>{
-        let newAvatar = {};
-        loadedData.map((data)=>{
-          newAvatar = {...newAvatar, ...itemAssign(data)}
-        })
-        setAvatar({...avatar, ...newAvatar})
-      })
+      loadTraitOptions(selectedOptions).then(traitNames=>{console.log("loaded traits are: ", traitNames)})
+      // loadOptions(selectedOptions).then((loadedData)=>{
+      //   let newAvatar = {};
+      //   loadedData.map((data)=>{
+      //     newAvatar = {...newAvatar, ...itemAssign(data)}
+      //   })
+      //   setAvatar({...avatar, ...newAvatar})
+      // })
       setSelectedOptions([]);
     }
 
@@ -148,6 +150,52 @@ export default function Selector() {
     return;
   }
 
+
+  const loadTraitOptions = (options)=>{
+    
+    options = filterRestrictedOptions(options);
+    console.log(options)
+
+    //validate if there is at least a non null option
+    let nullOptions = true;
+    options.map((option)=>{
+      if(option.item != null)
+        nullOptions = false;
+    })
+
+    if (nullOptions === true){
+      return new Promise((resolve) => {
+        resolve(options.map((opt)=>opt.trait.name))
+      });
+    }
+
+    const baseDir = templateInfo.traitsDirectory
+    const promises  = [];
+
+    options.map((option, i)=>{
+      if (option.item?.directory != null){
+        setSelectValue(option.key)
+        const textureDirectories = getAsArray(option.textureTrait?.directory).map((dir)=>baseDir + dir)
+        promises[i] = loadTrait(baseDir + option.item.directory, textureDirectories, option.colorTrait?.value, option.item.meshTargets)
+      }
+    })
+    
+    return new Promise((resolve)=>{
+      Promise.all(promises).then((vrms)=>{
+        console.log("result data is: ", vrms)
+        // add models here
+        vrms.map((vrm)=>{
+          if (animationManager){
+            animationManager.startAnimation(vrm)
+          }
+          model.add(vrm.scene)
+        })
+        resolve(options.map((opt)=>opt.trait.name))
+      }).catch((e)=>{
+        console.error(e)
+      })
+    })
+  }
   
   // load options first
   const loadOptions = (options) => {
@@ -175,12 +223,15 @@ export default function Selector() {
       return new VRMLoaderPlugin(parser)
     })
 
+
+
     // and a texture loaders for all the textures
     const textureLoader = new THREE.TextureLoader(loadingManager)
     loadingManager.onProgress = function(url, loaded, total){
       setLoadPercentage(Math.round(loaded/total * 100 ))
     }
     // return a promise, resolve = once everything is loaded
+
     return new Promise((resolve) => {
 
       // resultData will hold all the results in the array that was given this function
@@ -313,6 +364,7 @@ export default function Selector() {
     return typeTraits;
   }
 
+
   // once loaded, assign
   const itemAssign = (itemData) => {
 
@@ -338,12 +390,14 @@ export default function Selector() {
 
     // add culling data to each model TODO,  if user defines target culling meshes set them before here
     // models are vrm in some cases!, beware
-    let vrm = null
+    const vrms = []
     models.map((m)=>{
       // basic vrm setup (only if model is vrm)
-      vrm = m.userData.vrm;
+      const vrm = m.userData.vrm;
       setLipSync(new LipSync(vrm));
       renameVRMBones(vrm)
+
+      vrms.push(vrm);
       // animation setup section
       // play animations on this vrm  TODO, letscreate a single animation manager per traitInfo, as model may change since it is now a trait option
       if (animationManager){
@@ -398,7 +452,8 @@ export default function Selector() {
           setTraitsRightEye(current => [...current , child])
         }
       })
-
+      // add the now model to the current scene
+      model.add(vrm.scene)
       
     })
 
@@ -427,10 +482,6 @@ export default function Selector() {
           disposeVRM(avatar[traitData.name].vrm)
       }
     }
-
-    // add the now model to the current scene
-    model.add(vrm.scene)
-    
     
 
     // and then add the new avatar data
@@ -439,8 +490,8 @@ export default function Selector() {
       [traitData.name]: {
         traitInfo: item,
         name: item.name,
-        model: vrm.scene,
-        vrm: vrm,
+        model: vrms[0]?.scene,
+        vrm: vrms[0],
       }
     }
     //setAvatar({...avatar, ...newTrait})

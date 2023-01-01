@@ -1,14 +1,138 @@
 import React, { createContext, useEffect, useState } from "react"
 import * as THREE from "three"
 import { cullHiddenMeshes } from "../library/utils"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { VRMLoaderPlugin } from "@pixiv/three-vrm"
+import {
+  renameVRMBones,
+  createFaceNormals,
+  createBoneDirection,
+} from "../library/utils"
 
 export const SceneContext = createContext()
 
 export const SceneProvider = (props) => {
 
+  const gltfLoader = new GLTFLoader()
+  gltfLoader.register((parser) => {
+    return new VRMLoaderPlugin(parser)
+  })
+
+  const textureLoader = new THREE.TextureLoader()
+
   function getAsArray(target){
     if (target == null) return []
     return Array.isArray(target) ? target : [target]
+  }
+
+  async function loadTrait(modelFile, textureFiles, colors, meshTargetNames){
+
+    //create a loading manager for this trait
+    const loadManager = new THREE.LoadingManager()
+    const gltfLoad = new GLTFLoader(loadManager)
+    gltfLoad.register((parser) => {
+      return new VRMLoaderPlugin(parser)
+    })  
+    const txtrLoader = new THREE.TextureLoader(loadManager)
+    
+    // promise will fullfill when all assets necessary for this traits are loaded
+    return new Promise((resolve) => {
+
+      // resultData will hold all the results in the array that was given this function
+      const resultData = {
+        vrm:null,          
+        textures:[], 
+        colors:[]    
+      }
+
+      loadManager.onLoad = function (){
+
+        // find mesh targets if defined, if not, grab all children 
+        const meshTargets = [];
+        if (meshTargetNames!= null){
+          getAsArray(meshTargetNames).map((target) => {
+            const mesh = resultData.vrm.scene.getObjectByName ( target )
+            if (mesh?.isMesh) meshTargets.push(mesh);
+          })
+        }
+        else{
+          resultData.vrm.scene.traverse((child)=>{
+            if (child.isMesh)meshTargets.push(child);
+          })
+        }
+
+        // then assign the textures/colors by array order
+        meshTargets.map((mesh, index)=>{
+          if (resultData.textures.length > 0){
+            const txt = resultData.textures[index] || resultData.textures[0]
+            if (txt != null){
+              mesh.material[0].map = txt
+              mesh.material[0].shadeMultiplyTexture = txt
+            }
+          }
+          if (resultData.colors.length > 0){
+            const col = resultData.colors[index] || resultData.colors[0]
+            if (col != null){
+              mesh.material[0].uniforms.litFactor.value = col
+              mesh.material[0].uniforms.shadeColorFactor.value = new THREE.Color( col.r*0.8, col.g*0.8, col.b*0.8 )
+            }
+          }
+        })
+
+        // and return only the loaded vrm
+        resolve(resultData.vrm);
+        
+      }
+      
+      loadManager.onError = function (url){
+        console.warn("error loading " + url)
+      }
+
+      gltfLoad.load(modelFile,(m)=>{
+        const vrm = m.userData.vrm
+        renameVRMBones(vrm)
+  
+        vrm.scene?.traverse((child) => {
+          child.frustumCulled = false
+  
+          if (child.isMesh) {
+            createFaceNormals(child.geometry)
+            if (child.isSkinnedMesh) createBoneDirection(child)
+          }
+        })
+        resultData.vrm = vrm
+      })  
+
+      getAsArray(textureFiles).map((textureDir, i)=>{
+        txtrLoader.load(textureDir,(txt)=>{
+          txt.flipY = false;
+          resultData.textures[i] = txt
+        })
+      })
+        
+      getAsArray(colors).map((colorValue, i)=>{
+        console.log(colorValue)
+        resultData.colors[i] = new THREE.Color(colorValue);
+      })
+        
+    })
+  }
+
+  async function loadModel(file, onProgress) {
+    return gltfLoader.loadAsync(file, onProgress).then((model) => {
+      const vrm = model.userData.vrm
+      renameVRMBones(vrm)
+
+      vrm.scene?.traverse((child) => {
+        child.frustumCulled = false
+
+        if (child.isMesh) {
+          createFaceNormals(child.geometry)
+          if (child.isSkinnedMesh) createBoneDirection(child)
+        }
+      })
+      return vrm
+    })
   }
 
   const [template, setTemplate] = useState(null)
@@ -53,6 +177,10 @@ export const SceneProvider = (props) => {
         setLipSync,
         scene,
         setScene,
+
+        loadModel,
+        loadTrait,
+        
         currentTraitName,
         setCurrentTraitName,
         currentOptions,
