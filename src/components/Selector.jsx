@@ -5,24 +5,17 @@ import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import useSound from "use-sound"
 import cancel from "../../public/ui/selector/cancel.png"
 import { addModelData, disposeVRM } from "../library/utils"
-import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH } from 'three-mesh-bvh';
 
 import sectionClick from "../../public/sound/section_click.wav"
 import tick from "../../public/ui/selector/tick.svg"
 import { AudioContext } from "../context/AudioContext"
 import { SceneContext } from "../context/SceneContext"
-import {
-  renameVRMBones,
-  createFaceNormals,
-  createBoneDirection,
-} from "../library/utils"
+
 import { LipSync } from '../library/lipsync'
 
 import styles from "./Selector.module.css"
 
-THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
-THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
-THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
 
 export default function Selector() {
   const {
@@ -41,7 +34,6 @@ export default function Selector() {
     setTraitsLeftEye,
     setTraitsRightEye,
     getAsArray,
-    setLipSync,
     loadTrait
   } = useContext(SceneContext)
   const currentTemplateIndex = parseInt(currentTemplate.index)
@@ -130,6 +122,7 @@ export default function Selector() {
   },[selectedOptions])
   // user selects an option
   const selectTraitOption = (option) => {
+    // create a null option with current trait name to remove from current avatar
     if (option == null){
       option = {
         item:null,
@@ -151,8 +144,7 @@ export default function Selector() {
   const removeTrait = (traitName) => {
     if (avatar){
       if (avatar[traitName] && avatar[traitName].vrm) {
-        //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
-          disposeVRM(avatar[traitName].vrm)
+        disposeVRM(avatar[traitName].vrm)
       }
       avatar[traitName] = {};
     }
@@ -160,7 +152,6 @@ export default function Selector() {
 
   const loadTraitOptions = (options)=>{
     
-
     options = filterRestrictedOptions(options);
 
     //validate if there is at least a non null option
@@ -204,11 +195,6 @@ export default function Selector() {
             if (animationManager){
               animationManager.startAnimation(vrm)
             }
-
-              //     // basic vrm setup (only if model is vrm)
-            //setLipSync(new LipSync(vrm));
-            // culling layers setup section
-
             addModelData(vrm, {
               cullingLayer: 
                 item.cullingLayer != null ? item.cullingLayer: 
@@ -219,18 +205,11 @@ export default function Selector() {
                 traitData.cullingDistance != null ? traitData.cullingDistance:
                 templateInfo.defaultCullingDistance != null ? templateInfo.defaultCullingDistance: null,
             })  
+            console.log(vrm.data.cullingDistance)
 
             vrm.scene.traverse((child) => {
       
               // basic setup
-              child.frustumCulled = false
-              if (child.isMesh) {
-                if (child.geometry.boundsTree == null)
-                  child.geometry.computeBoundsTree({strategy:SAH});
-      
-                createFaceNormals(child.geometry)
-                if (child.isSkinnedMesh) createBoneDirection(child)
-              }
               if (child.isBone && child.name == 'neck') { 
                 setTraitsNecks(current => [...current , child])
               }
@@ -255,7 +234,7 @@ export default function Selector() {
           // and return data of new loaded traits
           return {[traitData.name]: {
             traitInfo: item,
-            name: item.name,
+            name: item?.name,
             model: vrm?.scene,
             vrm: vrm,
             }
@@ -268,97 +247,6 @@ export default function Selector() {
     })
   }
   
-  // load options first
-  // const loadOptions = (options) => {
-  //   // filter options by restrictions
-  //   options = filterRestrictedOptions(options);
-
-  //   // validate if there is at least a non null option
-  //   let nullOptions = true;
-  //   options.map((option)=>{
-  //     if(option.item != null)
-  //       nullOptions = false;
-  //   })
-  //   if (nullOptions === true){
-  //     return new Promise((resolve) => {
-  //       resolve(options)
-  //     });
-  //   }
-
-  //   //create the manager for all the options
-  //   const loadingManager = new THREE.LoadingManager()
-
-  //   //create a gltf loader for the 3d models
-  //   const gltfLoader = new GLTFLoader(loadingManager)
-  //   gltfLoader.register((parser) => {
-  //     return new VRMLoaderPlugin(parser)
-  //   })
-
-
-
-  //   // and a texture loaders for all the textures
-  //   const textureLoader = new THREE.TextureLoader(loadingManager)
-  //   loadingManager.onProgress = function(url, loaded, total){
-  //     setLoadPercentage(Math.round(loaded/total * 100 ))
-  //   }
-  //   // return a promise, resolve = once everything is loaded
-
-  //   return new Promise((resolve) => {
-
-  //     // resultData will hold all the results in the array that was given this function
-  //     const resultData = [];
-  //     loadingManager.onLoad = function (){
-  //       setLoadPercentage(0)
-  //       resolve(resultData);
-  //     };
-  //     loadingManager.onError = function (url){
-  //       console.warn("error loading " + url)
-  //     }
-  //     loadingManager.onProgress = function(url, loaded, total){
-  //       setLoadPercentage(Math.round(loaded/total * 100 ))
-  //     }
-
-  //     const baseDir = templateInfo.traitsDirectory// (maybe set in loading manager)
-      
-  //     // load necesary assets for the options
-  //     options.map((option, index)=>{
-  //       setSelectValue(option.key)
-  //       if (option == null){
-  //         resultData[index] = null;
-  //         return;
-  //       }
-  //       // load model trait
-  //       const loadedModels = []; 
-  //       getAsArray(option?.item?.directory).map((modelDir, i)=>{
-  //         gltfLoader.loadAsync (baseDir + modelDir).then((mod)=>{
-  //           loadedModels[i] = mod;
-  //         })
-  //       })
-        
-  //       // load texture trait
-  //       const loadedTextures = []; 
-  //       getAsArray(option?.textureTrait?.directory).map((textureDir, i)=>{
-  //         textureLoader.load(baseDir + textureDir,(txt)=>{
-  //           txt.flipY = false;
-  //           loadedTextures[i] = (txt)
-  //         })
-  //       })
-
-  //       // and just create colors
-  //       const loadedColors = [];
-  //       getAsArray(option?.colorTrait?.value).map((colorValue, i)=>{
-  //         loadedColors[i] = new THREE.Color(colorValue);
-  //       })
-  //       resultData[index] = {
-  //         item:option?.item,
-  //         trait:option?.trait,
-  //         models:loadedModels,          
-  //         textures:loadedTextures, 
-  //         colors:loadedColors      
-  //       }
-  //     })
-  //   });
-  // }
 
   const filterRestrictedOptions = (options) =>{
     let removeTraits = [];
@@ -434,142 +322,6 @@ export default function Selector() {
     }
     return typeTraits;
   }
-
-
-  // once loaded, assign
-  // const itemAssign = (itemData) => {
-
-  //   const item = itemData.item;
-  //   const traitData = itemData.trait;
-  //   const models = itemData.models;
-  //   const textures = itemData.textures;
-  //   const colors = itemData.colors;
-  //   // null section (when user selects to remove an option)
-  //   if ( item == null && avatar) {
-  //     if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
-  //       disposeVRM(avatar[traitData.name].vrm)
-  //       setSelectValue("")
-  //     }
-  //     return {
-  //       [traitData.name]: {}
-  //     }
-  //   }
-
-  //   // save an array of mesh targets
-  //   const meshTargets = [];
-    
-
-  //   // add culling data to each model TODO,  if user defines target culling meshes set them before here
-  //   // models are vrm in some cases!, beware
-  //   const vrms = []
-  //   models.map((m)=>{
-  //     // basic vrm setup (only if model is vrm)
-  //     const vrm = m.userData.vrm;
-  //     setLipSync(new LipSync(vrm));
-  //     renameVRMBones(vrm)
-
-  //     vrms.push(vrm);
-  //     // animation setup section
-  //     // play animations on this vrm  TODO, letscreate a single animation manager per traitInfo, as model may change since it is now a trait option
-  //     if (animationManager){
-  //       animationManager.startAnimation(vrm)
-  //     }
-
-  //     // culling layers setup section
-
-  //     addModelData(vrm, {
-  //       cullingLayer: 
-  //         item.cullingLayer != null ? item.cullingLayer: 
-  //         traitData.cullingLayer != null ? traitData.cullingLayer: 
-  //         templateInfo.defaultCullingLayer != null?templateInfo.defaultCullingLayer: -1,
-  //       cullingDistance: 
-  //         item.cullingDistance != null ? item.cullingDistance: 
-  //         traitData.cullingDistance != null ? traitData.cullingDistance:
-  //         templateInfo.defaultCullingDistance != null ? templateInfo.defaultCullingDistance: null,
-  //     })  
-
-  //     // mesh target setup section
-  //     if (item.meshTargets){
-  //       getAsArray(item.meshTargets).map((target) => {
-  //         const mesh = vrm.scene.getObjectByName ( target )
-  //         if (mesh?.isMesh) meshTargets.push(mesh);
-  //       })
-  //     }
-      
-  //     vrm.scene.traverse((child) => {
-        
-  //       // mesh target setup secondary swection
-  //       if (!item.meshTargets && child.isMesh) meshTargets.push(child);
-
-  //       // basic setup
-  //       child.frustumCulled = false
-  //       if (child.isMesh) {
-  //         if (child.geometry.boundsTree == null)
-  //           child.geometry.computeBoundsTree({strategy:SAH});
-
-  //         createFaceNormals(child.geometry)
-  //         if (child.isSkinnedMesh) createBoneDirection(child)
-  //       }
-  //       if (child.isBone && child.name == 'neck') { 
-  //         setTraitsNecks(current => [...current , child])
-  //       }
-  //       if (child.isBone && child.name == 'spine') { 
-  //         setTraitsSpines(current => [...current , child])
-  //       }
-  //       if (child.isBone && child.name === 'leftEye') { 
-  //         setTraitsLeftEye(current => [...current , child])
-  //       }
-  //       if (child.isBone && child.name === 'rightEye') { 
-  //         setTraitsRightEye(current => [...current , child])
-  //       }
-  //     })
-  //     // add the now model to the current scene
-  //     model.add(vrm.scene)
-      
-  //   })
-
-  //   // once the setup is done, assign them
-  //   meshTargets.map((mesh, index)=>{
-  //     if (textures){
-  //       const txt = textures[index] || textures[0]
-  //       if (txt != null){
-  //         mesh.material[0].map = txt
-  //         mesh.material[0].shadeMultiplyTexture = txt
-  //       }
-  //     }
-  //     if (colors){
-  //       const col = colors[index] || colors[0]
-  //       if (col != null){
-  //         mesh.material[0].uniforms.litFactor.value = col
-  //         mesh.material[0].uniforms.shadeColorFactor.value = new THREE.Color( col.r*0.8, col.g*0.8, col.b*0.8 )
-  //       }
-  //     }
-  //   })
-    
-  //   // if there was a previous loaded model, remove it (maybe also remove loaded textures?)
-  //   if (avatar){
-  //     if (avatar[traitData.name] && avatar[traitData.name].vrm) {
-  //       //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
-  //         disposeVRM(avatar[traitData.name].vrm)
-  //     }
-  //   }
-    
-
-  //   // and then add the new avatar data
-  //   // to do, we are now able to load multiple vrm models per options, set the options to include vrm arrays
-  //   return {
-  //     [traitData.name]: {
-  //       traitInfo: item,
-  //       name: item.name,
-  //       model: vrms[0]?.scene,
-  //       vrm: vrms[0],
-  //     }
-  //   }
-  //   //setAvatar({...avatar, ...newTrait})
-
-  //   //console.log("AVATAR IS: ", avatar)
-
-  // }
 
   const [play] = useSound(sectionClick, { volume: 1.0 })
 

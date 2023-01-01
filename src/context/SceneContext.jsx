@@ -8,8 +8,13 @@ import {
   createFaceNormals,
   createBoneDirection,
 } from "../library/utils"
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH } from 'three-mesh-bvh';
 
 export const SceneContext = createContext()
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 export const SceneProvider = (props) => {
 
@@ -23,6 +28,7 @@ export const SceneProvider = (props) => {
     return Array.isArray(target) ? target : [target]
   }
 
+  // returns a vrm file with attached textures/colors to target meshes or all child meshes if null
   async function loadTrait(modelFile, textureFiles, colors, meshTargetNames){
 
     //create a loading manager for this trait
@@ -34,7 +40,6 @@ export const SceneProvider = (props) => {
     const txtrLoader = new THREE.TextureLoader(loadManager)
     
     // promise will fullfill when all assets necessary for this traits are loaded
-    // returns a vrm file with attached textures/colors to target meshes/ all meshe if null
     return new Promise((resolve) => {
 
       // resultData will hold all the results in the array that was given this function
@@ -98,6 +103,7 @@ export const SceneProvider = (props) => {
           if (child.isMesh) {
             createFaceNormals(child.geometry)
             if (child.isSkinnedMesh) createBoneDirection(child)
+            child.geometry.computeBoundsTree({strategy:SAH});
           }
         })
         resultData.vrm = vrm
@@ -131,6 +137,7 @@ export const SceneProvider = (props) => {
         if (child.isMesh) {
           createFaceNormals(child.geometry)
           if (child.isSkinnedMesh) createBoneDirection(child)
+          child.geometry.computeBoundsTree({strategy:SAH});
         }
       })
       return vrm
