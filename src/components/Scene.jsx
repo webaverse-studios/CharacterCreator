@@ -11,6 +11,9 @@ export default function Scene({templateInfo}) {
     scene,
     setScene,
     currentCameraMode,
+
+
+
     setSelectedRandomTraits,
     model,
     setAnimationManager,
@@ -23,6 +26,7 @@ export default function Scene({templateInfo}) {
     initializeScene,
     getAsArray,
     setControls
+    getAsArray
   } = useContext(SceneContext)
   const {setCurrentView} = useContext(ViewContext)
   const maxLookPercent = {
@@ -229,7 +233,6 @@ export default function Scene({templateInfo}) {
 
     });
     // move to selector
-    //setLipSync(new LipSync(vrm));
     
   }, [])
 
