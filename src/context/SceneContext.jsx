@@ -12,12 +12,25 @@ import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH } from 't
 
 export const SceneContext = createContext()
 
+
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-export const SceneProvider = (props) => {
 
+export const SceneProvider = (props) => {
+  const initializeScene = () => {
+    const scene = new THREE.Scene()
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    scene.add(directionalLight);
+    return scene;
+  }
+  const [scene, setScene] = useState(initializeScene())
+
+////=======
   const gltfLoader = new GLTFLoader()
   gltfLoader.register((parser) => {
     return new VRMLoaderPlugin(parser)
@@ -147,9 +160,10 @@ export const SceneProvider = (props) => {
 
   const [template, setTemplate] = useState(null)
   const [scene, setScene] = useState(new THREE.Scene())   
+////>>>>>>> separate-ui-unmerged
   const [currentTraitName, setCurrentTraitName] = useState(null)
   const [currentOptions, setCurrentOptions] = useState([])
-  const [model, setModel] = useState(null)
+  const [model, setModel] = useState(new THREE.Object3D())
   const [animationManager, setAnimationManager] = useState(null)
   const [camera, setCamera] = useState(null)
 
@@ -162,23 +176,23 @@ export const SceneProvider = (props) => {
   const [traitsLeftEye, setTraitsLeftEye] = useState([])
   const [traitsRightEye, setTraitsRightEye] = useState([])
   const [skinColor, setSkinColor] = useState(new THREE.Color(1, 1, 1))
-  const [avatar, _setAvatar] = useState(null);
+  const [avatar, _setAvatar] = useState(null)
 
-  const [lipSync, setLipSync] = useState(null);
-  
+  const [controls, setControls] = useState(null)
+
+  const [lipSync, setLipSync] = useState(null)
+
   const setAvatar = (state) => {
     _setAvatar(state)
   }
-  useEffect(()=>{
-   
-    if (avatar){
-     if(Object.keys(avatar).length > 0){
+  useEffect(() => {
+    if (avatar) {
+      if (Object.keys(avatar).length > 0) {
         cullHiddenMeshes(avatar)
-     }
+      }
     }
-  },[avatar])
+  }, [avatar])
 
-  const [currentTemplate, setCurrentTemplate] = useState(null)
   return (
     <SceneContext.Provider
       value={{
@@ -211,18 +225,17 @@ export const SceneProvider = (props) => {
         setSkinColor,
         avatar,
         setAvatar,
-        currentTemplate,
-        setCurrentTemplate,
-        template,
-        setTemplate,
         traitsNecks,
         setTraitsNecks,
         traitsSpines,
         setTraitsSpines,
+        controls,
+        setControls,
         traitsLeftEye,
         setTraitsLeftEye,
         traitsRightEye,
-        setTraitsRightEye
+        setTraitsRightEye,
+        initializeScene
       }}
     >
       {props.children}

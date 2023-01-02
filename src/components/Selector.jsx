@@ -17,13 +17,11 @@ import styles from "./Selector.module.css"
 
 
 
-export default function Selector() {
+export default function Selector({templateInfo}) {
   const {
     avatar,
     setAvatar,
-    currentTemplate,
     currentTraitName,
-    template,
     currentOptions,
     selectedOptions,
     setSelectedOptions,
@@ -36,8 +34,6 @@ export default function Selector() {
     getAsArray,
     loadTrait
   } = useContext(SceneContext)
-  const currentTemplateIndex = parseInt(currentTemplate.index)
-  const templateInfo = template[currentTemplateIndex]
   const { isMute } = useContext(AudioContext)
 
   const [selectValue, setSelectValue] = useState("0")
