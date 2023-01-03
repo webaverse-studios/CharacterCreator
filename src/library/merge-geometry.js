@@ -5,6 +5,7 @@ import { findChildrenByType } from "./utils.js";
 import { createTextureAtlas } from "./create-texture-atlas.js";
 
 export function cloneSkeleton(skinnedMesh) {
+    console.log("cloning mesh skeleton")
     const boneClones = new Map();
     for (const bone of skinnedMesh.skeleton.bones) {
         const clone = bone.clone(false);
@@ -25,6 +26,7 @@ export function cloneSkeleton(skinnedMesh) {
     const newSkeleton = new THREE.Skeleton(skinnedMesh.skeleton.bones.map((b) => boneClones.get(b)));
     newSkeleton.boneInverses = skinnedMesh.skeleton.boneInverses;
     newSkeleton.pose();
+    console.log(newSkeleton)
     return newSkeleton;
 }
 
@@ -37,7 +39,10 @@ export async function combine({ transparentColor, avatar, atlasSize = 4096 }) {
     
     const meshes = bakeObjects.map((bakeObject) => bakeObject.mesh);
     meshes.forEach((mesh) => {
+        console.log(mesh)
         const geometry = mesh.geometry;
+
+        // if no uv maps are set, save the primary uvs
         if (!geometry.attributes.uv2) {
             geometry.attributes.uv2 = geometry.attributes.uv;
         }
@@ -129,6 +134,7 @@ function mergeSourceAttributes({ sourceAttributes }) {
     Array.from(propertyNames.keys()).map((name) => {
         destAttributes[name] = BufferGeometryUtils.mergeBufferAttributes(allSourceAttributes.map((sourceAttributes) => sourceAttributes[name]).flat().filter((attr) => attr !== undefined));
     });
+    console.log(destAttributes)
     return destAttributes;
 }
 function mergeSourceMorphTargetDictionaries({ sourceMorphTargetDictionaries }) {
@@ -330,10 +336,10 @@ function remapAnimationClips({ animationClips, sourceMorphTargetDictionaries, me
     return animationClips.map((clip) => new THREE.AnimationClip(clip.name, clip.duration, clip.tracks.map((track) => remapKeyframeTrack({ track, sourceMorphTargetDictionaries, meshes, destMorphTargetDictionary })), clip.blendMode));
 }
 export function mergeGeometry({ meshes }) {
-    let uvcount = 0;
-    meshes.forEach(mesh => {
-        uvcount += mesh.geometry.attributes.uv.count;
-    });
+    //let uvcount = 0;
+    //meshes.forEach(mesh => {
+        //uvcount += mesh.geometry.attributes.uv.count;
+    //});
     const source = {
         meshes,
         attributes: new Map(meshes.map((m) => [m, m.geometry.attributes])),
