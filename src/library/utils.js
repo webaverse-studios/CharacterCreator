@@ -50,7 +50,7 @@ export async function loadRandomTraitOptions( templateInfo , traitNames){
 
   return Promise.all(traitOptions.map((opt, i) => {
     return loadTraitOption(opt.modelTrait, opt.textureTrait, opt.colorTrait, templateInfo, traitNames[i])
-  })).catch((e)=>{console.log(e)})
+  })).catch((e)=>{console.error(e)})
 
 }
 
