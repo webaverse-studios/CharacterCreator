@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import useSound from "use-sound"
 import cancel from "../../public/ui/selector/cancel.png"
-import { addModelData, disposeVRM, loadRandomTraitModels, loadTraitModel, getAsArray } from "../library/utils"
+import { addModelData, disposeVRM, loadRandomTraitOptions, loadTraitModel, getAsArray } from "../library/utils"
 
 import sectionClick from "../../public/sound/section_click.wav"
 import tick from "../../public/ui/selector/tick.svg"
@@ -103,7 +103,7 @@ export default function Selector({templateInfo}) {
   // options are selected by random or start
   useEffect(() => {
     if (selectedOptions.length > 0){
-      loadRandomTraitModels(templateInfo, ...new Set([templateInfo.randomTraits, templateInfo.requiredTraits]))
+      loadRandomTraitOptions(templateInfo, ...new Set([templateInfo.randomTraits, templateInfo.requiredTraits]))
         .then((loadedTraits)=>{
             let newAvatar = {};
             loadedTraits.map((loadedTrait)=>{

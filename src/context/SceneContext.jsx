@@ -30,11 +30,6 @@ export const SceneProvider = (props) => {
   }
   const [scene, setScene] = useState(initializeScene())
 
-  function getAsArray(target){
-    if (target == null) return []
-    return Array.isArray(target) ? target : [target]
-  }
-
   // returns a vrm file with attached textures/colors to target meshes or all child meshes if null
   
 
@@ -73,7 +68,6 @@ export const SceneProvider = (props) => {
   return (
     <SceneContext.Provider
       value={{
-        getAsArray,
         lipSync,
         setLipSync,
         scene,

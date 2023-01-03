@@ -33,8 +33,8 @@ export async function prepareModel(templateInfo){
 
 }
 
-// returns 
-export async function loadRandomTraitModels( templateInfo , traitNames){
+// returns an array of loaded traits, that can be added to the final avatar
+export async function loadRandomTraitOptions( templateInfo , traitNames){
   console.log(traitNames)
   console.log('templateInfo', templateInfo)
 
@@ -116,7 +116,7 @@ export function getRandomTraitOption(templateInfo, traitName){
 
 // returns an option of target collection, if no index is set, a random item from the collection will be picked
 export function getCollectionOption(collection, name, index){
-  
+
   const traits = collection.find ( item => item.trait === name )
   if (index == null)
     index = Math.floor ( Math.random() * traits.collection.length )
