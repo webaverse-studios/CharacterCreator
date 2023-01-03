@@ -5,6 +5,8 @@ import { SceneContext } from "../context/SceneContext"
 import { CameraMode, ViewContext, ViewStates } from "../context/ViewContext"
 import { AnimationManager } from "../library/animationManager"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import { getAsArray } from "../library/utils"
+
 
 export default function Scene({templateInfo}) {
   const {
@@ -24,9 +26,7 @@ export default function Scene({templateInfo}) {
     traitsLeftEye,
     traitsRightEye,
     initializeScene,
-    getAsArray,
     setControls
-    getAsArray
   } = useContext(SceneContext)
   const {setCurrentView} = useContext(ViewContext)
   const maxLookPercent = {

@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import useSound from "use-sound"
 import cancel from "../../public/ui/selector/cancel.png"
-import { addModelData, disposeVRM } from "../library/utils"
+import { addModelData, disposeVRM, loadRandomTraitModels, loadTraitModel, getAsArray } from "../library/utils"
 
 import sectionClick from "../../public/sound/section_click.wav"
 import tick from "../../public/ui/selector/tick.svg"
@@ -30,9 +30,7 @@ export default function Selector({templateInfo}) {
     setTraitsNecks,
     setTraitsSpines,
     setTraitsLeftEye,
-    setTraitsRightEye,
-    getAsArray,
-    loadTrait
+    setTraitsRightEye
   } = useContext(SceneContext)
   const { isMute } = useContext(AudioContext)
 
@@ -105,17 +103,71 @@ export default function Selector({templateInfo}) {
   // options are selected by random or start
   useEffect(() => {
     if (selectedOptions.length > 0){
-      loadTraitOptions(selectedOptions).then(traits=>{
-        let newAvatar = {};
-        traits.map((trait)=>{
-          newAvatar = {...newAvatar, ...trait}
+      loadRandomTraitModels(templateInfo, ...new Set([templateInfo.randomTraits, templateInfo.requiredTraits]))
+        .then((loadedTraits)=>{
+            let newAvatar = {};
+            loadedTraits.map((loadedTrait)=>{
+              console.log()
+              console.log(Object.values(loadedTrait)[0])
+              initializeVRM(
+                Object.values(loadedTrait)[0].vrm,
+                Object.values(loadedTrait)[0].traitInfo,
+                Object.keys(loadedTrait)[0]
+                )
+              newAvatar = {...newAvatar, ...loadedTrait}
+            })
+            setAvatar({...avatar, ...newAvatar})
         })
-        setAvatar({...avatar, ...newAvatar})
-      })
+      // loadTraitOptions(selectedOptions).then(traits=>{
+      //   let newAvatar = {};
+      //   traits.map((trait)=>{
+      //     newAvatar = {...newAvatar, ...trait}
+      //   })
+      //   setAvatar({...avatar, ...newAvatar})
+      // })
       setSelectedOptions([]);
     }
 
   },[selectedOptions])
+
+  const initializeVRM = (vrm, item, traitData) =>{ 
+    console.log(traitData)
+    if (animationManager){
+      animationManager.startAnimation(vrm)
+    }
+    // addModelData(vrm, {
+    //   cullingLayer: 
+    //     item.cullingLayer != null ? item.cullingLayer: 
+    //     traitData.cullingLayer != null ? traitData.cullingLayer: 
+    //     templateInfo.defaultCullingLayer != null?templateInfo.defaultCullingLayer: -1,
+    //   cullingDistance: 
+    //     item.cullingDistance != null ? item.cullingDistance: 
+    //     traitData.cullingDistance != null ? traitData.cullingDistance:
+    //     templateInfo.defaultCullingDistance != null ? templateInfo.defaultCullingDistance: null,
+    // })  
+    // console.log(vrm.data.cullingDistance)
+
+    vrm.scene.traverse((child) => {
+
+      // basic setup
+      if (child.isBone && child.name == 'neck') { 
+        setTraitsNecks(current => [...current , child])
+      }
+      if (child.isBone && child.name == 'spine') { 
+        setTraitsSpines(current => [...current , child])
+      }
+      if (child.isBone && child.name === 'leftEye') { 
+        setTraitsLeftEye(current => [...current , child])
+      }
+      if (child.isBone && child.name === 'rightEye') { 
+        setTraitsRightEye(current => [...current , child])
+      }
+    })
+    console.log("added", vrm.scene)
+    // add to scene
+    model.add(vrm.scene)
+  }
+
   // user selects an option
   const selectTraitOption = (option) => {
     // create a null option with current trait name to remove from current avatar
@@ -170,7 +222,7 @@ export default function Selector({templateInfo}) {
       if (option.item?.directory != null){
         setSelectValue(option.key)
         const textureDirectories = getAsArray(option.textureTrait?.directory).map((dir)=>baseDir + dir)
-        promises[i] = loadTrait(baseDir + option.item.directory, textureDirectories, option.colorTrait?.value, option.item.meshTargets)
+        promises[i] = loadTraitModel(baseDir + option.item.directory, textureDirectories, option.colorTrait?.value, option.item.meshTargets)
       }
       else{
         promises[i] = new Promise((resolve) => {
