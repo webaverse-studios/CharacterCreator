@@ -33,10 +33,15 @@ export async function prepareModel(templateInfo){
 
 }
 
+
+
+export function getAsArray(target){
+  if (target == null) return []
+  return Array.isArray(target) ? target : [target]
+}
+
 // returns an array of loaded traits, that can be added to the final avatar
 export async function loadRandomTraitOptions( templateInfo , traitNames){
-  console.log(traitNames)
-  console.log('templateInfo', templateInfo)
 
   // grab the first trait for each category
   const traitOptions = traitNames.map((traitName) => {
@@ -47,11 +52,6 @@ export async function loadRandomTraitOptions( templateInfo , traitNames){
     return loadTraitOption(opt.modelTrait, opt.textureTrait, opt.colorTrait, templateInfo, traitNames[i])
   })).catch((e)=>{console.log(e)})
 
-}
-
-export function getAsArray(target){
-  if (target == null) return []
-  return Array.isArray(target) ? target : [target]
 }
 
 // returns a specific full Trait Item (modelTrait, texturesTrait, colorsTrait) from target trait
@@ -83,7 +83,7 @@ export function getTraitOption(templateInfo, traitName, traitIndex, textureIndex
 
 }
 
-// returns a random full Trait Item (modelTrait, texturesTrait, colorsTrait) from target trait
+// returns a random full Trait Item (modelTrait, texturesTrait, colorsTrait) from target trait by name
 export function getRandomTraitOption(templateInfo, traitName){
   
   const trait = getCollectionOption ( templateInfo.traits , traitName) 
@@ -125,7 +125,7 @@ export function getCollectionOption(collection, name, index){
 
 }
 
-// returns a promise, on resolve, the full trait data (item, name, model, vrm) of this option
+// returns a promise, resolves the full trait data (item, name, model, vrm)
 export async function loadTraitOption (itemTrait, textureTrait, colorTrait, templateInfo, traitName){
   return new Promise ((resolve) => {
     loadTraitModel(itemTrait.directory, textureTrait?.directory, colorTrait?.value, itemTrait.meshTargets, templateInfo.traitsDirectory ).then((vrm)=>{
@@ -140,7 +140,7 @@ export async function loadTraitOption (itemTrait, textureTrait, colorTrait, temp
   })
 }
 
-// returns a promise, on resolve, a vrm file with attached textures/colors to meshTargetNames or all child meshes if null
+// returns a promise, resolves a vrm file with attached textures/colors to meshTargetNames or all child meshes if null
 export async function loadTraitModel(modelFile, textureFiles, colors, meshTargetNames, baseDirectory = ""){
 
   //create a loading manager for this trait
@@ -237,7 +237,6 @@ export async function loadTraitModel(modelFile, textureFiles, colors, meshTarget
       
   })
 }
-
 
 export async function loadModel(file, onProgress) {
   const gltfLoader = new GLTFLoader()
