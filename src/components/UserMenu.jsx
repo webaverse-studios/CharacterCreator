@@ -165,10 +165,7 @@ export const UserMenu = () => {
 
       // to do: this data is taken from a vrm trait, set it from here instead
       const vrmBaseData = getAvatarVRMData();
-      console.log(getAvatarData(avatarModel).humanoid.humanBones)
       const vrmData = {...vrmBaseData,...getAvatarData(avatarModel)};
-      console.log(vrmBaseData)
-      console.log(vrmData)
       vrmData.materials = [avatarModel.userData.atlasMaterial]
 
       exporter.parse(vrmData, avatarModel, (vrm) => {

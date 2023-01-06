@@ -1,4 +1,5 @@
 import { BufferAttribute, } from "three";
+import { VRMExpressionPresetName } from "@pixiv/three-vrm";
 function ToOutputVRMMeta(vrmMeta, icon, outputImage) {
     return {
         allowedUserName: vrmMeta.allowedUserName,
@@ -40,12 +41,12 @@ const GLTF_VERSION = 2;
 const HEADER_SIZE = 12;
 export default class VRMExporter {
     parse(vrm, avatar, onDone) {
-        console.log("humanoid is: ", vrm.humanoid)
-        console.log(avatar)
+        console.log("VRM HERE", vrm)
         const humanoid = vrm.humanoid;
         const vrmMeta = vrm.meta;
         const materials = vrm.materials;
         const expressionsPreset = {};
+        const expressionCustom = {};
         //console.log(vrm)
         //const blendShapeProxy = vrm.blendShapeProxy;
         const lookAt = vrm.lookAt;
@@ -161,15 +162,31 @@ export default class VRMExporter {
             
             for (const prop in vrm.expressionManager.expressionMap){
                 const expression = vrm.expressionManager.expressionMap[prop];
-                const morphs = expression._binds.map(obj => ([{node:0, index:obj.index, weight:obj.weight  }]))
-                expressionsPreset[prop] = {
-                    morphTargetBinds:morphs,
-                    isBinary:expression.overrideBlink,
-                    overrideBlink:expression.overrideBlink,
-                    overrideLookAt:expression.overrideLookAt,
-                    overrideMouth:expression.overrideMouth,
-
+                const morphTargetBinds = expression._binds.map(obj => ({node:0, index:obj.index, weight:obj.weight  }))
+                let isPreset = false;
+                for (const presetName in VRMExpressionPresetName) {
+                    if (prop === VRMExpressionPresetName[presetName]){
+                        expressionsPreset[prop] = {
+                            morphTargetBinds,
+                            isBinary:expression.isBinary,
+                            overrideBlink:expression.overrideBlink,
+                            overrideLookAt:expression.overrideLookAt,
+                            overrideMouth:expression.overrideMouth,
+                        }
+                        isPreset = true;
+                        break;
+                    }
                 }
+                if (isPreset === false){
+                    expressionCustom[prop] = {
+                        morphTargetBinds,
+                        isBinary:expression.isBinary,
+                        overrideBlink:expression.overrideBlink,
+                        overrideLookAt:expression.overrideLookAt,
+                        overrideMouth:expression.overrideMouth,
+                    }
+                }
+                
                 // to do, material target binds, and texture transform binds
             }
 
@@ -262,7 +279,8 @@ export default class VRMExporter {
         // TODO: javascript版の弊害によるエラーなので将来的に実装を変える
         //lookAt.firstPerson._firstPersonBoneOffset.z *= -1; // TODO:
         const vrmLookAt = {
-          offsetFromHeadBone: [lookAt.offsetFromHeadBone.x,lookAt.offsetFromHeadBone.y,lookAt.offsetFromHeadBone.z],
+          //offsetFromHeadBone: [lookAt.offsetFromHeadBone.x,lookAt.offsetFromHeadBone.y,lookAt.offsetFromHeadBone.z],
+          offsetFromHeadBone: [0,0,0],
           rangeMapHorizontalInner: {
               inputMaxValue: lookAt.applier.rangeMapHorizontalInner.inputMaxValue,
               outputScale: lookAt.applier.rangeMapHorizontalInner.outputScale,
@@ -281,6 +299,14 @@ export default class VRMExporter {
           },
           type: "bone"
         };
+
+        //temporal, taking the first node as it is the skinned mesh renderer
+        // const vrmFirstPerson = {
+        //     meshAnnotations:[
+        //         {node:243, type:"auto"}
+        //     ]
+        // }
+
         // const vrmFirstPerson = {
         //     firstPersonBone: nodeNames.indexOf(
         //     lookAt.firstPerson._firstPersonBone.name),
@@ -333,7 +359,6 @@ export default class VRMExporter {
             //console.log(`${property}: ${object[property]}`);
             vrmHumanoid.humanBones[bone] = { node: nodeNames.indexOf(humanoid.humanBones[bone].node.name)}
         }
-        console.log("humanoid", vrmHumanoid);
         //rest of the data is stored in VRMHumanoidDescription
         // const vrmHumanoid = {
         //     armStretch: humanoid.humanDescription.armStretch,
@@ -406,16 +431,16 @@ export default class VRMExporter {
             extensions: {
                 VRMC_vrm: {
                     expressions: {
-                        preset:expressionsPreset
+                        preset:expressionsPreset,
+                        custom:expressionCustom
                     },
-                    exporterVersion: EXPORTER_VERSION,
                     //firstPerson: vrmFirstPerson,
                     humanoid: vrmHumanoid,
                     lookAt: vrmLookAt,
                     meta: outputVrmMeta,
                     //materialProperties: materialProperties,
                     //secondaryAnimation: outputSecondaryAnimation,
-                    specVersion: "0.0", // TODO:
+                    specVersion: "1.0", 
                 },
             },
             extensionsUsed: [
