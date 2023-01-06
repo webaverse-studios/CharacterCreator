@@ -40,6 +40,8 @@ const GLTF_VERSION = 2;
 const HEADER_SIZE = 12;
 export default class VRMExporter {
     parse(vrm, avatar, onDone) {
+        console.log("humanoid is: ", vrm.humanoid)
+        console.log(avatar)
         const humanoid = vrm.humanoid;
         const vrmMeta = vrm.meta;
         const materials = vrm.materials;
@@ -331,6 +333,7 @@ export default class VRMExporter {
             //console.log(`${property}: ${object[property]}`);
             vrmHumanoid.humanBones[bone] = { node: nodeNames.indexOf(humanoid.humanBones[bone].node.name)}
         }
+        console.log("humanoid", vrmHumanoid);
         //rest of the data is stored in VRMHumanoidDescription
         // const vrmHumanoid = {
         //     armStretch: humanoid.humanDescription.armStretch,
@@ -431,6 +434,7 @@ export default class VRMExporter {
             skins: outputSkins,
             textures: outputTextures,
         };
+        console.log(outputData)
         const jsonChunk = new GlbChunk(parseString2Binary(JSON.stringify(outputData, undefined, 2)), "JSON");
         const binaryChunk = new GlbChunk(concatBinary(bufferViews.map((buf) => buf.buffer)), "BIN\x00");
         const fileData = concatBinary([jsonChunk.buffer, binaryChunk.buffer]);

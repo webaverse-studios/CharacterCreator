@@ -25,7 +25,7 @@ import CustomButton from "./custom-button"
 import styles from "./Landing.module.css"
 
 const dropHunter = "../3d/models/landing/drop-noWeapon.vrm"
-const neuroHacker = "../3d/models/landing/neuro-noWeapon.vrm"
+const neuroHacker = "../3d/models/landing/drop-noWeapon.vrm"
 
 const anim_drophunter = "../3d/animations/idle_drophunter.fbx"
 const anim_neurohacker = "../3d/animations/idle_neurohacker.fbx"

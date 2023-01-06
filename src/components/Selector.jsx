@@ -322,10 +322,12 @@ export default function Selector() {
     const textures = itemData.textures;
     const colors = itemData.colors;
     // null section (when user selects to remove an option)
-    if ( item == null && avatar) {
-      if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
-        disposeVRM(avatar[traitData.name].vrm)
-        setSelectValue("")
+    if ( item == null ) {
+      if (avatar){
+        if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
+          disposeVRM(avatar[traitData.name].vrm)
+          setSelectValue("")
+        }
       }
       return {
         [traitData.name]: {}
@@ -428,8 +430,9 @@ export default function Selector() {
       }
     }
 
+    else
     // add the now model to the current scene
-    model.add(vrm.scene)
+      model.add(vrm.scene)
     
     
 

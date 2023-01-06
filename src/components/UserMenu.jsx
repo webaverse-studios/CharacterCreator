@@ -11,6 +11,7 @@ import { combine } from "../library/merge-geometry"
 import VRMExporter from "../library/VRMExporter"
 import CustomButton from "./custom-button"
 import { CHAINS } from "./Contract"
+import { getAvatarData } from "../library/utils"
 
 import styles from "./UserMenu.module.css"
 
@@ -162,9 +163,13 @@ export const UserMenu = () => {
       )
     } else {
 
-      const vrmData = getAvatarVRMData();
-      vrmData.materials = [avatarModel.userData.atlasMaterial]
+      // to do: this data is taken from a vrm trait, set it from here instead
+      const vrmBaseData = getAvatarVRMData();
+      console.log(getAvatarData(avatarModel).humanoid.humanBones)
+      const vrmData = {...vrmBaseData,...getAvatarData(avatarModel)};
+      console.log(vrmBaseData)
       console.log(vrmData)
+      vrmData.materials = [avatarModel.userData.atlasMaterial]
 
       exporter.parse(vrmData, avatarModel, (vrm) => {
         saveArrayBuffer(vrm, `${downloadFileName}.vrm`)
@@ -175,10 +180,14 @@ export const UserMenu = () => {
   function getAvatarVRMData(){
     // to do, merge data from all vrms, not to get only the first one
     for (const prop in avatar){
-      if (avatar[prop].vrm)
+      if (avatar[prop].vrm){
+        console.log(avatar[prop].vrm)
         return avatar[prop].vrm
+      }
     }
   }
+
+
 
   function getArrayBuffer(buffer) {
     return new Blob([buffer], { type: "application/octet-stream" })
