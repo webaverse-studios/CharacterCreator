@@ -33,7 +33,7 @@ var WEBGL_CONST;
 const BLENDSHAPE_PREFIX = "blend_";
 const MORPH_CONTROLLER_PREFIX = "BlendShapeController_";
 const SPRINGBONE_COLLIDER_NAME = "vrmColliderSphere";
-const EXPORTER_VERSION = "UniVRM-0.64.0";
+const EXPORTER_VERSION = "alpha-v1.0";
 const CHUNK_TYPE_JSON = "JSON";
 const CHUNK_TYPE_BIN = "BIN\x00";
 const GLTF_VERSION = 2;
@@ -262,7 +262,7 @@ export default class VRMExporter {
         // TODO: javascript版の弊害によるエラーなので将来的に実装を変える
         //lookAt.firstPerson._firstPersonBoneOffset.z *= -1; // TODO:
         const vrmLookAt = {
-          offsetFromHeadBone: [lookAt.offsetFromHeadBonex,lookAt.offsetFromHeadBone.y,lookAt.offsetFromHeadBone.z],
+          offsetFromHeadBone: [lookAt.offsetFromHeadBone.x,lookAt.offsetFromHeadBone.y,lookAt.offsetFromHeadBone.z],
           rangeMapHorizontalInner: {
               inputMaxValue: lookAt.applier.rangeMapHorizontalInner.inputMaxValue,
               outputScale: lookAt.applier.rangeMapHorizontalInner.outputScale,
