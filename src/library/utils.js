@@ -8,7 +8,7 @@ import { combine } from "./merge-geometry";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { VRMHumanBoneName } from "@pixiv/three-vrm";
-
+import { SAH } from 'three-mesh-bvh';
 
 export async function prepareModel(templateInfo){
   // check the local storage for a JSON of the model
@@ -16,6 +16,7 @@ export async function prepareModel(templateInfo){
 
   // if it doesn't exist, fetch the first trait for each category from the server
   console.log('templateInfo', templateInfo)
+
   // grab the first trait for each category
   const traits = templateInfo.traits.map((category) => {
     return category.traits[0]
@@ -34,6 +35,209 @@ export async function prepareModel(templateInfo){
 }
 
 
+
+export function getAsArray(target){
+  if (target == null) return []
+  return Array.isArray(target) ? target : [target]
+}
+
+// returns an array of loaded traits, that can be added to the final avatar
+export async function loadRandomTraitOptions( templateInfo , traitNames){
+
+  // grab the first trait for each category
+  const traitOptions = traitNames.map((traitName) => {
+    return getRandomTraitOption(templateInfo, traitName)
+  })
+
+  return Promise.all(traitOptions.map((opt, i) => {
+    return loadTraitOption(opt.modelTrait, opt.textureTrait, opt.colorTrait, templateInfo, traitNames[i])
+  })).catch((e)=>{console.error(e)})
+
+}
+
+// returns a specific full Trait Item (modelTrait, texturesTrait, colorsTrait) from target trait
+export function getTraitOption(templateInfo, traitName, traitIndex, textureIndex, colorIndex){
+
+  const trait = getCollectionOption ( templateInfo.traits , traitName , traitIndex) ;
+  
+  if (trait != null){
+    const option = {
+      modelTrait : null,
+      textureTrait : null,
+      colorTrait : null
+    }
+
+    if (trait.textureCollection){
+      option.textureTrait = getCollectionOption( templateInfo.textureCollections , trait.textureCollection , textureIndex )
+    }
+    
+    if (trait.colorCollection){
+      option.colorTrait = getCollectionOption( templateInfo.colorCollections , trait.colorCollection , colorIndex )
+    }
+
+    return option;
+  }
+  else{
+    console.error(`No trait with name ${traitName} was found`)
+    return null;
+  }
+
+}
+
+// returns a random full Trait Item (modelTrait, texturesTrait, colorsTrait) from target trait by name
+export function getRandomTraitOption(templateInfo, traitName){
+  
+  const trait = getCollectionOption ( templateInfo.traits , traitName) 
+
+  if (trait != null){
+
+    const option = {
+      modelTrait : trait,
+      textureTrait : null,
+      colorTrait : null
+    }
+
+    if (trait.textureCollection){
+      option.textureTrait = getCollectionOption( templateInfo.textureCollections , trait.textureCollection )
+    }
+    
+    if (trait.colorCollection){
+      option.colorTrait = getCollectionOption( templateInfo.colorCollections , trait.colorCollection )
+    }
+
+    return option;
+
+  }
+  else{
+    console.error(`No trait with name ${traitName} was found`)
+    return null;
+  }
+
+}
+
+// returns an option of target collection, if no index is set, a random item from the collection will be picked
+export function getCollectionOption(collection, name, index){
+
+  const traits = collection.find ( item => item.trait === name )
+  if (index == null)
+    index = Math.floor ( Math.random() * traits.collection.length )
+
+  return traits.collection [ index ]
+
+}
+
+// returns a promise, resolves the full trait data (item, name, model, vrm)
+export async function loadTraitOption (itemTrait, textureTrait, colorTrait, templateInfo, traitName){
+  return new Promise ((resolve) => {
+    loadTraitModel(itemTrait.directory, textureTrait?.directory, colorTrait?.value, itemTrait.meshTargets, templateInfo.traitsDirectory ).then((vrm)=>{
+      resolve( {[traitName]: {
+        traitInfo: itemTrait,
+        name: itemTrait?.name,
+        model: vrm?.scene,
+        vrm: vrm,
+      }})
+    })
+  
+  })
+}
+
+// returns a promise, resolves a vrm file with attached textures/colors to meshTargetNames or all child meshes if null
+export async function loadTraitModel(modelFile, textureFiles, colors, meshTargetNames, baseDirectory = ""){
+
+  //create a loading manager for this trait
+  const loadManager = new THREE.LoadingManager()
+  const gltfLoad = new GLTFLoader(loadManager)
+  gltfLoad.register((parser) => {
+    return new VRMLoaderPlugin(parser)
+  })  
+  const txtrLoader = new THREE.TextureLoader(loadManager)
+  
+  // promise will fullfill when all assets necessary for this traits are loaded
+  return new Promise((resolve) => {
+
+    // resultData will hold all the results in the array that was given this function
+    const resultData = {
+      vrm:null,          
+      textures:[], 
+      colors:[]    
+    }
+    
+
+    loadManager.onLoad = function (){
+
+      // find mesh targets if defined, if not, grab all children 
+      const meshTargets = [];
+      if (meshTargetNames!= null){
+        getAsArray(meshTargetNames).map((target) => {
+          const mesh = resultData.vrm.scene.getObjectByName ( target )
+          if (mesh?.isMesh) meshTargets.push(mesh);
+        })
+      }
+      else{
+        resultData.vrm.scene.traverse((child)=>{
+          if (child.isMesh)meshTargets.push(child);
+        })
+      }
+
+      // then assign the textures/colors by array order
+      meshTargets.map((mesh, index)=>{
+        if (resultData.textures.length > 0){
+          const txt = resultData.textures[index] || resultData.textures[0]
+          if (txt != null){
+            mesh.material[0].map = txt
+            mesh.material[0].shadeMultiplyTexture = txt
+          }
+        }
+        if (resultData.colors.length > 0){
+          const col = resultData.colors[index] || resultData.colors[0]
+          if (col != null){
+            mesh.material[0].uniforms.litFactor.value = col
+            mesh.material[0].uniforms.shadeColorFactor.value = new THREE.Color( col.r*0.8, col.g*0.8, col.b*0.8 )
+          }
+        }
+      })
+
+      resolve(resultData.vrm);
+      
+    }
+    
+    loadManager.onError = function (url){
+      console.warn("error loading " + url)
+    }
+
+    // load model
+    gltfLoad.load(baseDirectory + modelFile,(m)=>{
+      const vrm = m.userData.vrm
+      renameVRMBones(vrm)
+
+      vrm.scene?.traverse((child) => {
+        child.frustumCulled = false
+
+        if (child.isMesh) {
+          createFaceNormals(child.geometry)
+          if (child.isSkinnedMesh) createBoneDirection(child)
+          child.geometry.computeBoundsTree({strategy:SAH});
+        }
+      })
+      resultData.vrm = vrm
+    })  
+
+    // load textures
+    getAsArray(textureFiles).map((textureDir, i)=>{
+      txtrLoader.load(baseDirectory + textureDir,(txt)=>{
+        txt.flipY = false;
+        resultData.textures[i] = txt
+      })
+    })
+      
+    // load colors
+    getAsArray(colors).map((colorValue, i)=>{
+      console.log(colorValue)
+      resultData.colors[i] = new THREE.Color(colorValue);
+    })
+      
+  })
+}
 
 export async function loadModel(file, onProgress) {
   const gltfLoader = new GLTFLoader()

@@ -1,13 +1,22 @@
 import React, { createContext, useEffect, useState } from "react"
 import * as THREE from "three"
 import { cullHiddenMeshes } from "../library/utils"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { VRMLoaderPlugin } from "@pixiv/three-vrm"
+import {
+  renameVRMBones,
+  createFaceNormals,
+  createBoneDirection,
+} from "../library/utils"
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH } from 'three-mesh-bvh';
 
 export const SceneContext = createContext()
 
-function getAsArray(target) {
-  if (target == null) return []
-  return Array.isArray(target) ? target : [target]
-}
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
 
 export const SceneProvider = (props) => {
   const initializeScene = () => {
@@ -17,11 +26,12 @@ export const SceneProvider = (props) => {
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     scene.add(directionalLight);
-
     return scene;
   }
-
   const [scene, setScene] = useState(initializeScene())
+
+  // returns a vrm file with attached textures/colors to target meshes or all child meshes if null
+  
 
   const [currentTraitName, setCurrentTraitName] = useState(null)
   const [currentOptions, setCurrentOptions] = useState([])
@@ -58,11 +68,11 @@ export const SceneProvider = (props) => {
   return (
     <SceneContext.Provider
       value={{
-        getAsArray,
         lipSync,
         setLipSync,
         scene,
         setScene,
+        
         currentTraitName,
         setCurrentTraitName,
         currentOptions,
