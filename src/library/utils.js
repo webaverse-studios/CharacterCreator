@@ -7,6 +7,7 @@ import { CullHiddenFaces } from './cull-mesh.js';
 import { combine } from "./merge-geometry";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { VRMHumanBoneName } from "@pixiv/three-vrm";
 import { SAH } from 'three-mesh-bvh';
 
 export async function prepareModel(templateInfo){
@@ -565,6 +566,73 @@ export function findChildrenByType(root, type) {
         candidates: [root],
         predicate: (o) => o.type === type,
     });
+}
+export function getAvatarData (avatarModel, modelName){
+  const skinnedMeshes = findChildrenByType(avatarModel, "SkinnedMesh")
+  return{
+    humanBones:getHumanoidByBoneNames(skinnedMeshes[0]),
+    materials : [avatarModel.userData.atlasMaterial],
+    meta : getVRMMeta(modelName)
+  }
+
+}
+
+
+function getVRMMeta(name){
+  return {
+    authors:["Webaverse"],
+    metaVersion:"1",
+    version:"v1",
+    name:name,
+    licenseURL:"https://webaverse.com/",
+    commercialUssageName: "personalNonProfit",
+    contactInformation: "https://webaverse.com/", 
+    allowExcessivelyViolentUsage:false,
+    allowExcessivelySexualUsage:false,
+    allowPoliticalOrReligiousUsage:false,
+    allowAntisocialOrHateUsage:false,
+    creditNotation:"required",
+    allowRedistribution:false,
+    modification:"prohibited"
+  }
+}
+
+function getVRMDefaultLookAt(){
+  return {
+    offsetFromHeadBone:[0,0,0],
+    applier:{
+      rangeMapHorizontalInner:{
+        inputMaxValue:90,
+        inputSacle:62.1
+      },
+      rangeMapHorizontalOuter:{
+        inputMaxValue:90,
+        inputSacle:68.6
+      },
+      rangeMapVerticalDown:{
+        inputMaxValue:90,
+        inputSacle:57.9
+      },
+      rangeMapVerticalUp:{
+        inputMaxValue:90,
+        inputSacle:52.8
+      }
+    },
+    type:"bone"
+  }
+
+}
+function getHumanoidByBoneNames(skinnedMesh){
+  const humanBones = {}
+  skinnedMesh.skeleton.bones.map((bone)=>{
+    for (const boneName in VRMHumanBoneName) {
+      if (VRMHumanBoneName[boneName] === bone.name){
+        humanBones[bone.name] ={node : bone};
+        break;
+      }
+    }
+  })
+  return humanBones
 }
 function traverseWithDepth({ object3D, depth = 0, callback, result }) {
     result.push(callback(object3D, depth));

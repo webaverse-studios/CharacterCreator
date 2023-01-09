@@ -1,16 +1,16 @@
-import React, { Fragment, Suspense, useContext } from "react"
+import React, { Fragment, Suspense, useContext, useEffect, useState } from "react"
 
 import Scene from "./components/Scene"
-import { CameraMode, ViewContext, ViewStates } from "./context/ViewContext"
+import { AppMode, CameraMode, ViewContext, ViewStates } from "./context/ViewContext"
 
 /* eslint-disable react/no-unknown-property */
-import { BackButton } from "./components/BackButton"
 import ChatComponent from "./components/ChatComponent"
 import Editor from "./components/Editor"
 
 import ARButton from "./components/ARButton"
-import AudioButton from "./components/AudioButton"
 import Background from "./components/Background"
+import ChatButton from "./components/ChatButton"
+import { UserMenu } from "./components/UserMenu"
 
 import LoadingOverlay from "./components/LoadingOverlay"
 
@@ -62,41 +62,47 @@ const resource = fetchData()
 export default function App() {
   const manifest = resource.read()
   
+  const { currentAppMode, setCurrentAppMode } = useContext(ViewContext)
   // randomly roll a number between 0 and the data length
   const randomIndex = Math.floor(Math.random() * manifest.length)
   const templateInfo = manifest && manifest[randomIndex]
 
-//   // fetch the manifest, then set it
-//   useEffect(() => {
-//       setCurrentView(ViewStates.CREATOR)
-//   }, [])
+  const [hideUi, setHideUi] = useState(false)
 
-//   const [showChat, setShowChat] = useState(false);
-  
-//   useEffect(() => {
-//     // if user presses ctrl h, show chat
-//     const handleKeyDown = (e) => {
-//       if (e.ctrlKey && e.key === 'h') {
-//         e.preventDefault();
-//         setShowChat(!showChat);
-//       }
-//     }
-//     window.addEventListener('keydown', handleKeyDown);
-//     return () => {
-//         window.removeEventListener('keydown', handleKeyDown);
-//     }
-// }, [])
+// detect a double tap on the screen or a mouse click
+// switch the UI on and off
+let lastTap = 0
+useEffect(() => {
+  const handleTap = () => {
+    const now = new Date().getTime()
+    const timesince = now - lastTap
+    if (timesince < 300 && timesince > 0) {
+      setHideUi(!hideUi)
+    }
+    lastTap = now
+  }
+  window.addEventListener("touchend", handleTap)
+  window.addEventListener("click", handleTap)
+  return () => {
+    window.removeEventListener("touchend", handleTap)
+    window.removeEventListener("click", handleTap)
+  }
+}, [hideUi])
 
 return (
   <Suspense fallback={<LoadingOverlay />}>
-  <Fragment>
-        <ARButton />
-        <AudioButton />
-        <Background />
+    <Fragment>
+      <Background />
         <Scene templateInfo={templateInfo} />
-
-        {false && <ChatComponent />}
-        {<Editor templateInfo={templateInfo} />}
+        {!hideUi &&
+          <Fragment>
+          <ChatButton />
+        <ARButton />
+        <UserMenu />
+        {currentAppMode === AppMode.CHAT && <ChatComponent />}
+        {currentAppMode === AppMode.APPEARANCE && <Editor templateInfo={templateInfo} />}
+          </Fragment>
+      }
       </Fragment>
     </Suspense>
   )

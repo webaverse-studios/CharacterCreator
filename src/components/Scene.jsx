@@ -30,10 +30,10 @@ export default function Scene({templateInfo}) {
   } = useContext(SceneContext)
   const {setCurrentView} = useContext(ViewContext)
   const maxLookPercent = {
-    neck : 30,
+    neck : 20,
     spine : 5,
-    left : 60,
-    right : 60,
+    left : 20,
+    right : 20,
   }
 
   const [platform, setPlatform] = useState(null);
@@ -124,7 +124,13 @@ export default function Scene({templateInfo}) {
     }
   }
 
+  let loaded = false;
+  let [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
+    if(loaded || isLoaded) return;
+    setIsLoaded(true);
+    loaded = true;
     // add a camera to the scene
     const camera = new THREE.PerspectiveCamera(
       30,
@@ -227,10 +233,13 @@ export default function Scene({templateInfo}) {
       }
       );
 
-      setInterval(() => {
-        animationMixer.update(0.0005);
-      });
+      const updateAnimationMixer = (delta) => {
+        requestAnimationFrame(updateAnimationMixer);
+        animationMixer.update(delta / 1000 / 10000);
+      }
 
+      requestAnimationFrame(updateAnimationMixer);
+  
     });
     // move to selector
     
