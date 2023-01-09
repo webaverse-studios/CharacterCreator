@@ -717,7 +717,7 @@ const toOutputMaterials = (uniqueMaterials, images) => {
       material = material.userData.vrmMaterial?material.userData.vrmMaterial:material;
       if (material.type === "ShaderMaterial") {
           VRMC_materials_mtoon = material.userData.gltfExtensions.VRMC_materials_mtoon;
-          VRMC_materials_mtoon.shadeMultiplyTexture = images.map((image) => image.name).indexOf(material.uniforms.shadeMultiplyTexture.name);
+          VRMC_materials_mtoon.shadeMultiplyTexture = {index:images.map((image) => image.name).indexOf(material.uniforms.shadeMultiplyTexture.name)};
 
           const mtoonMaterial = material;
           baseColor = mtoonMaterial.color ? [
