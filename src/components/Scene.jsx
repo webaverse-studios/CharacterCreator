@@ -5,12 +5,17 @@ import { SceneContext } from "../context/SceneContext"
 import { CameraMode, ViewContext, ViewStates } from "../context/ViewContext"
 import { AnimationManager } from "../library/animationManager"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import { getAsArray } from "../library/utils"
+
 
 export default function Scene({templateInfo}) {
   const {
     scene,
     setScene,
     currentCameraMode,
+
+
+
     setSelectedRandomTraits,
     model,
     setAnimationManager,
@@ -21,7 +26,6 @@ export default function Scene({templateInfo}) {
     traitsLeftEye,
     traitsRightEye,
     initializeScene,
-    getAsArray,
     setControls
   } = useContext(SceneContext)
   const {setCurrentView} = useContext(ViewContext)
@@ -238,7 +242,6 @@ export default function Scene({templateInfo}) {
   
     });
     // move to selector
-    //setLipSync(new LipSync(vrm));
     
   }, [])
 
