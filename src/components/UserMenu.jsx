@@ -9,7 +9,7 @@ import { SceneContext } from "../context/SceneContext"
 import { ViewContext, ViewStates } from "../context/ViewContext"
 import { combine } from "../library/merge-geometry"
 import { getAvatarData } from "../library/utils"
-import VRMExporter from "../library/VRMExporter"
+import VRMExporter from "../library/VRMExporterv0"
 import CustomButton from "./custom-button"
 
 import styles from "./UserMenu.module.css"
