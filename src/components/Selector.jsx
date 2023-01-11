@@ -318,10 +318,12 @@ export default function Selector({templateInfo}) {
     const textures = itemData.textures;
     const colors = itemData.colors;
     // null section (when user selects to remove an option)
-    if ( item == null && avatar) {
-      if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
-        disposeVRM(avatar[traitData.name].vrm)
-        setSelectValue("")
+    if ( item == null) {
+      if (avatar){
+        if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
+          disposeVRM(avatar[traitData.name].vrm)
+          setSelectValue("")
+        }
       }
       return {
         [traitData.name]: {}
