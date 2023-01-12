@@ -25,7 +25,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-export default function Selector({templateInfo, animationManager}) {
+export default function Selector({templateInfo, animationManager, effectManager}) {
   const {
     avatar,
     setAvatar,
@@ -403,6 +403,8 @@ export default function Selector({templateInfo, animationManager}) {
 
     // once the setup is done, assign them
     meshTargets.map((mesh, index)=>{
+      effectManager.dissolveCustomShader(mesh.material[0]);
+      effectManager.dissolveCustomShader(mesh.material[1]);
       if (textures){
         const txt = textures[index] || textures[0]
         if (txt != null){

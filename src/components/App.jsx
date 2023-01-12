@@ -8,6 +8,7 @@ import ChatComponent from "./ChatComponent"
 import Editor from "./Editor"
 
 import { AnimationManager } from "../library/animationManager"
+import { EffectManager } from "../library/effectManager"
 import { getAsArray } from "../library/utils"
 import ARButton from "./ARButton"
 import Background from "./Background"
@@ -64,7 +65,7 @@ async function fetchAll() {
   const templateInfo = manifest[templateIndex]
 
   const animationManager = await fetchAnimation(templateInfo)
-
+  
   // check if initialTraits is set in localStorage
   // if not, set it to a random index
   let initialTraits = localStorage.getItem("initialTraits")
@@ -75,12 +76,15 @@ async function fetchAll() {
     initialTraits = JSON.parse(initialTraits)
   }
 
+  const effectManager = new EffectManager();
+
   return {
     manifest,
     sceneModel,
     templateInfo,
     animationManager,
-    initialTraits
+    initialTraits,
+    effectManager
   }
 }
 
@@ -115,7 +119,7 @@ const fetchData = () => {
 const resource = fetchData()
 
 export default function App() {
-  const {manifest, sceneModel, templateInfo, initialTraits, animationManager} = resource.read()
+  const {manifest, sceneModel, templateInfo, initialTraits, animationManager, effectManager} = resource.read()
 
   const { currentAppMode } = useContext(ViewContext)
 
@@ -152,7 +156,7 @@ return (
         <ARButton />
         <UserMenu />
         {currentAppMode === AppMode.CHAT && <ChatComponent />}
-        {currentAppMode === AppMode.APPEARANCE && <Editor animationManager={animationManager} initialTraits={initialTraits} templateInfo={templateInfo} />}
+        {currentAppMode === AppMode.APPEARANCE && <Editor animationManager={animationManager} initialTraits={initialTraits} templateInfo={templateInfo} effectManager={effectManager}/>}
           </Fragment>
       }
     </Fragment>
