@@ -95,7 +95,7 @@ export class EffectManager{
         noiseUv
       );
 
-      float noiseStrength = pow(1. - uTime, 3.) + 0.025;
+      float noiseStrength = uTime < 1.? pow(1. - uTime, 3.) + 0.025 : 0.025;
       float noiseCutout = textureRemap(noise, vec2(0.0, 1.0), vec2(-noiseStrength, noiseStrength)).r;
 
       float bottomPosition = 0.7;
