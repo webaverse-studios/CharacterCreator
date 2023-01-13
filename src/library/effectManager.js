@@ -2,7 +2,7 @@ import * as THREE from "three"
 
 
 const textureLoader = new THREE.TextureLoader()
-const noiseTexture = textureLoader.load(`/textures/noise2.jpg`);
+const noiseTexture = textureLoader.load(`/textures/noise4.png`);
 noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping;
 
 const uniforms = {
@@ -26,11 +26,12 @@ const uniforms = {
 export class EffectManager{
   constructor () {
     this.cameraDir = new THREE.Vector3();
+    this.timer = 0;
     this.update();
   }
 
   dissolveCustomShader(material) {
-    uniforms.uTime.value = -0.8;
+    uniforms.uTime.value = -1.;
 
     material.vertexShader = material.vertexShader.replace(
       `varying vec3 vViewPosition;`,
@@ -153,6 +154,7 @@ export class EffectManager{
   update() {
     setInterval(() => {
       uniforms.uTime.value += 0.025;
+      this.timer = uniforms.uTime.value;
       // uniforms.uTime.value = performance.now() / 1000;
       if (this.camera) {
         this.cameraDir.set(0, 0, -1);

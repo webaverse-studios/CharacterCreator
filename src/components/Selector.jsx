@@ -433,7 +433,10 @@ export default function Selector({templateInfo, animationManager, effectManager}
       if (avatar[traitData.name] && avatar[traitData.name].vrm) {
         traitData
         //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
-        disposeVRM(avatar[traitData.name].vrm)
+        setTimeout(() => {
+          disposeVRM(avatar[traitData.name].vrm)
+        }, 1500)
+        
       }
     }
     
@@ -442,9 +445,14 @@ export default function Selector({templateInfo, animationManager, effectManager}
       m.visible = false;
       // add the now model to the current scene
       model.add(m)
+
       setTimeout(() => {
         m.visible = true;
-      }, 50)
+        m.scale.set(0.01, 0.01, 0.01);
+      }, 10)
+      setTimeout(() => {
+        m.scale.set(1, 1, 1);
+      }, 1500)
 
       // update the joint rotation of the new trait
       const event = new Event('modelUpdate');
