@@ -19,6 +19,9 @@ import {
 import { LipSync } from '../library/lipsync'
 import { getAsArray } from "../library/utils"
 
+
+
+
 import styles from "./Selector.module.css"
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -38,8 +41,10 @@ export default function Selector({templateInfo, animationManager, effectManager}
     setTraitsSpines,
     setTraitsLeftEye,
     setTraitsRightEye,
-    setLipSync
+    setLipSync,
+    mousePosition,
   } = useContext(SceneContext)
+
   const { isMute } = useContext(AudioContext)
   const {setLoading} = useContext(ViewContext)
 
@@ -312,7 +317,6 @@ export default function Selector({templateInfo, animationManager, effectManager}
 
   // once loaded, assign
   const itemAssign = (itemData) => {
-
     const item = itemData.item;
     const traitData = itemData.trait;
     const models = itemData.models;
@@ -371,13 +375,16 @@ export default function Selector({templateInfo, animationManager, effectManager}
       }
       
       vrm.scene.traverse((child) => {
-        
+
         // mesh target setup secondary swection
         if (!item.meshTargets && child.isMesh) meshTargets.push(child);
 
         // basic setup
         child.frustumCulled = false
         if (child.isMesh) {
+          effectManager.dissolveCustomShader(child.material[0]);
+          effectManager.dissolveCustomShader(child.material[1]);
+
           if (child.geometry.boundsTree == null)
             child.geometry.computeBoundsTree({strategy:SAH});
 
@@ -403,8 +410,8 @@ export default function Selector({templateInfo, animationManager, effectManager}
 
     // once the setup is done, assign them
     meshTargets.map((mesh, index)=>{
-      effectManager.dissolveCustomShader(mesh.material[0]);
-      effectManager.dissolveCustomShader(mesh.material[1]);
+      // effectManager.dissolveCustomShader(mesh.material[0]);
+      // effectManager.dissolveCustomShader(mesh.material[1]);
       if (textures){
         const txt = textures[index] || textures[0]
         if (txt != null){
@@ -424,6 +431,7 @@ export default function Selector({templateInfo, animationManager, effectManager}
     // if there was a previous loaded model, remove it (maybe also remove loaded textures?)
     if (avatar){
       if (avatar[traitData.name] && avatar[traitData.name].vrm) {
+        traitData
         //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
         disposeVRM(avatar[traitData.name].vrm)
       }
@@ -437,7 +445,16 @@ export default function Selector({templateInfo, animationManager, effectManager}
       setTimeout(() => {
         m.visible = true;
       }, 50)
+
+      // update the joint rotation of the new trait
+      const event = new Event('modelUpdate');
+      event.x = mousePosition.x;
+      event.y = mousePosition.y;
+      event.model = m;
+      window.dispatchEvent(event);
     }
+
+    
 
     // and then add the new avatar data
     // to do, we are now able to load multiple vrm models per options, set the options to include vrm arrays

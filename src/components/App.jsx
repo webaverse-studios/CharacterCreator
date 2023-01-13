@@ -17,6 +17,8 @@ import { UserMenu } from "./UserMenu"
 
 import Logo from "./Logo"
 
+import { SceneContext } from "../context/SceneContext"
+
 // dynamically import the manifest
 const assetImportPath = import.meta.env.VITE_ASSET_PATH + "/manifest.json"
 
@@ -122,6 +124,8 @@ export default function App() {
   const {manifest, sceneModel, templateInfo, initialTraits, animationManager, effectManager} = resource.read()
 
   const { currentAppMode } = useContext(ViewContext)
+  const {camera} = useContext(SceneContext);
+  effectManager.camera = camera;
 
   const [hideUi, setHideUi] = useState(false)
 
