@@ -3,7 +3,7 @@ import { disposeVRM } from "../library/utils"
 
 
 const textureLoader = new THREE.TextureLoader()
-const noiseTexture = textureLoader.load(`/textures/noise4.png`);
+const noiseTexture = textureLoader.load(`/textures/pixel2.png`);
 noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping;
 
 const fadeInThreshold = 1;
@@ -104,7 +104,9 @@ export class EffectManager{
         noiseUv
       );
 
-      float minStrength = fadeOut ? 0.1 : 0.025;
+      float fadeOutStrength = 0.2;
+      float fadeInStrength = 0.025;
+      float minStrength = fadeOut ? fadeOutStrength : fadeInStrength;
       float noiseStrength = uTime < 1.? pow(1. - uTime, 5.0) + minStrength : minStrength;
       float noiseCutout = textureRemap(noise, vec2(0.0, 1.0), vec2(-noiseStrength, noiseStrength)).r;
 
@@ -132,36 +134,56 @@ export class EffectManager{
       float gridIntensity = 10.0;
       float EdotN = max(0.0, dot(eyeDirection, normalize(vSurfaceNormal + vec3(grid) * vec3(1.0, gridIntensity * (1. - uTime), 1.0))));
       
+      bool isBorder = vWorldPosition.y > limit && vWorldPosition.y < upperBound;
+      
+      if (isBorder && !fadeOut) {
+        float rimStrength = 0.5 * uTime;
+        float boaderRim = mix(0.0, 1.0, pow(1. - EdotN, rimStrength));
+        float glowIntensity = clamp(100. * (1. - uTime), 20., 100.);
 
-      if (uTime <= 1.0) {
-        if (vWorldPosition.y > limit && vWorldPosition.y < upperBound) {
-          float rimStrength = 0.5 * uTime;
-          float boaderRim = mix(0.0, 1.0, pow(1. - EdotN, rimStrength));
-          float glowIntensity = clamp(100. * (1. - uTime), 20., 100.);
+        float distanceToMid = abs((upperBound - vWorldPosition.y) / border - 0.5) * 2.0;
+        diffuseColor = vec4(mix(boderColor, boderColor2, 1. - distanceToMid), 1.0);
+        float d = pat(noiseUv, 1.0, 2.0, 10.0, 0.35);		
+        diffuseColor = diffuseColor * 0.9 / d;
+        
+        diffuseColor = smoothstep(0., 0.5, diffuseColor);
 
-          float distanceToMid = abs((upperBound - vWorldPosition.y) / border - 0.5) * 2.0;
-          diffuseColor = vec4(mix(boderColor, boderColor2, 1. - distanceToMid), 1.0);
-          float d = pat(noiseUv, 1.0, 2.0, 10.0, 0.35);		
-          diffuseColor = diffuseColor * 0.9 / d;
-          
-          diffuseColor = smoothstep(0., 0.5, diffuseColor);
-  
-          // vec3 boderRimColor = mix(boderColor, boderColor2, noiseCutout);
-          diffuseColor.rgb *= boaderRim * glowIntensity;
-        }
-        else {
-          diffuseColor *= sampledDiffuseColor;
-          float rimStrength = 1.0 * uTime;
-          float bodyRim = mix(0.0, 1.0, pow(1. - EdotN, rimStrength));
-          float glowIntensity = 25. * (1. - uTime);
-
-          diffuseColor.rgb += boderColor * bodyRim * glowIntensity;
-          diffuseColor.a = step(vWorldPosition.y, limit);
-        }
+        // vec3 boderRimColor = mix(boderColor, boderColor2, noiseCutout);
+        diffuseColor.rgb *= boaderRim * glowIntensity;
       }
-      if (uTime <= 0.) {
-        diffuseColor.a = 0.;
+      else {
+        diffuseColor *= sampledDiffuseColor;
+        float rimStrength = 1.5 * uTime;
+        float bodyRim = mix(0.0, 1.0, pow(1. - EdotN, rimStrength));
+        float glowIntensity = fadeOut? 150. * (1. - uTime) : 25. * (1. - uTime);
+
+        diffuseColor.rgb += boderColor * bodyRim * glowIntensity;
+        diffuseColor.a = step(vWorldPosition.y, limit);
       }
+      
+      
+      // if (fadeOut) {
+      //   if (uTime <= fadeOutStrength) {
+      //     diffuseColor.a = 0.;
+      //   }
+      // }
+      // else {
+      //   if (uTime <= fadeInStrength) {
+      //     diffuseColor.a = 0.;
+      //   }
+      // }
+      `,
+    );
+    material.fragmentShader = material.fragmentShader.replace(
+      `col += totalEmissiveRadiance;`,
+      `
+      if (isBorder) {
+        col = diffuseColor.rgb;
+      }
+      else {
+        col += totalEmissiveRadiance;
+      }
+      
       `,
     );
 
