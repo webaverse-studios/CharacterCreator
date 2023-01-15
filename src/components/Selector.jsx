@@ -327,8 +327,10 @@ export default function Selector({templateInfo, animationManager, effectManager}
       // if avatar exists and trait exsits, remove it
       if (avatar){
         if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
-          disposeVRM(avatar[traitData.name].vrm)
+          setTimeout(() => {
+            disposeVRM(avatar[traitData.name].vrm)
           setSelectValue("")
+          }, effectManager.fadeCycle)
         }
       }
       // always return an empty trait here when receiving null item
@@ -431,11 +433,11 @@ export default function Selector({templateInfo, animationManager, effectManager}
     // if there was a previous loaded model, remove it (maybe also remove loaded textures?)
     if (avatar){
       if (avatar[traitData.name] && avatar[traitData.name].vrm) {
-        traitData
+        effectManager.playFadeOut();
         //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
         setTimeout(() => {
           disposeVRM(avatar[traitData.name].vrm)
-        }, 1500)
+        }, effectManager.fadeCycle)
         
       }
     }
@@ -448,11 +450,7 @@ export default function Selector({templateInfo, animationManager, effectManager}
 
       setTimeout(() => {
         m.visible = true;
-        m.scale.set(0.01, 0.01, 0.01);
-      }, 10)
-      setTimeout(() => {
-        m.scale.set(1, 1, 1);
-      }, 1500)
+      }, effectManager.fadeCycle)
 
       // update the joint rotation of the new trait
       const event = new Event('modelUpdate');
