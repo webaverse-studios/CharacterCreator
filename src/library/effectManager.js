@@ -6,6 +6,9 @@ const textureLoader = new THREE.TextureLoader()
 const noiseTexture = textureLoader.load(`/textures/noise4.png`);
 noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping;
 
+const fadeInThreshold = 1;
+const fadeOutThreshold = 0;
+
 const uniforms = {
   uTime: {
     value: 0
@@ -19,8 +22,8 @@ const uniforms = {
   cameraDir: {
     value: new THREE.Vector3()
   },
-  cameraQuaternion: {
-    value: new THREE.Quaternion()
+  fadeOut: {
+    value: false
   }
 };
 
@@ -30,39 +33,28 @@ export class EffectManager{
     this.timer = 0;
     this.fadeOut = false;
     
-
-
     this.frameRate = 1000 / 30;
-    this.fadeInThreshold = 1;
-    this.fadeOutThreshold = 0;
     this.fadeSpeed = 0.02;
-    this.fadeCycle = this.frameRate * ((this.fadeInThreshold - this.fadeOutThreshold) / this.fadeSpeed);
-
+    this.fadeCycle = this.frameRate * ((fadeInThreshold - fadeOutThreshold) / this.fadeSpeed);
 
     this.update();
   }
 
   dissolveCustomShader(material) {
-    // uniforms.uTime.value = 1;
-
+    
     material.vertexShader = material.vertexShader.replace(
       `varying vec3 vViewPosition;`,
       `
       varying vec3 vViewPosition;
       varying vec3 vWorldPosition;
       varying vec3 vSurfaceNormal;
-      uniform vec4 cameraQuaternion;
       `,
     );
     material.vertexShader = material.vertexShader.replace(
       `void main() {`,
       `
-      vec3 rotate_vertex_position(vec3 position, vec4 q) { 
-        return position + 2.0 * cross(q.xyz, cross(q.xyz, position) + q.w * position);
-      }
       void main() {
         vSurfaceNormal = normalize(normal);
-        // vSurfaceNormal = rotate_vertex_position(vSurfaceNormal, cameraQuaternion);
       `,
     );
     material.vertexShader = material.vertexShader.replace(
@@ -81,6 +73,7 @@ export class EffectManager{
       uniform vec3 eye;
       uniform float uTime;
       uniform sampler2D dissolveTexture;
+      uniform bool fadeOut;
       varying vec3 vWorldPosition;
       varying vec3 vSurfaceNormal;
       
@@ -99,7 +92,7 @@ export class EffectManager{
     material.fragmentShader = material.fragmentShader.replace(
       `diffuseColor *= sampledDiffuseColor;`,
       `
-      diffuseColor *= sampledDiffuseColor;
+      
       
       float noiseUvScale = 3.5;
       vec2 noiseUv = vec2(
@@ -111,7 +104,7 @@ export class EffectManager{
         noiseUv
       );
 
-      float minStrength = 0.025;
+      float minStrength = fadeOut ? 0.1 : 0.025;
       float noiseStrength = uTime < 1.? pow(1. - uTime, 5.0) + minStrength : minStrength;
       float noiseCutout = textureRemap(noise, vec2(0.0, 1.0), vec2(-noiseStrength, noiseStrength)).r;
 
@@ -140,7 +133,7 @@ export class EffectManager{
       float EdotN = max(0.0, dot(eyeDirection, normalize(vSurfaceNormal + vec3(grid) * vec3(1.0, gridIntensity * (1. - uTime), 1.0))));
       
 
-      if (uTime < 1.0) {
+      if (uTime <= 1.0) {
         if (vWorldPosition.y > limit && vWorldPosition.y < upperBound) {
           float rimStrength = 0.5 * uTime;
           float boaderRim = mix(0.0, 1.0, pow(1. - EdotN, rimStrength));
@@ -157,6 +150,7 @@ export class EffectManager{
           diffuseColor.rgb *= boaderRim * glowIntensity;
         }
         else {
+          diffuseColor *= sampledDiffuseColor;
           float rimStrength = 1.0 * uTime;
           float bodyRim = mix(0.0, 1.0, pow(1. - EdotN, rimStrength));
           float glowIntensity = 25. * (1. - uTime);
@@ -165,25 +159,23 @@ export class EffectManager{
           diffuseColor.a = step(vWorldPosition.y, limit);
         }
       }
-      
-
-      
+      if (uTime <= 0.) {
+        diffuseColor.a = 0.;
+      }
       `,
     );
 
-    
-
     material.uniforms.dissolveTexture = uniforms.dissolveTexture;
     material.uniforms.cameraDir = uniforms.cameraDir;
-    material.uniforms.cameraQuaternion = uniforms.cameraQuaternion;
     material.uniforms.eye = uniforms.eye;
     material.uniforms.uTime = uniforms.uTime;
+    material.uniforms.fadeOut = uniforms.fadeOut;
     material.transparent = true;
   }
 
   playFadeOut() {
     this.fadeOut = true;
-    uniforms.uTime.value = this.fadeInThreshold;
+    uniforms.uTime.value = fadeInThreshold;
   }
   
   update() {
@@ -191,18 +183,18 @@ export class EffectManager{
       // // uniforms.uTime.value = Math.abs(Math.cos(performance.now() / 1500));
       // this.timer = uniforms.uTime.value;
       // // uniforms.uTime.value = performance.now() / 1000;
-      
+      uniforms.fadeOut.value = this.fadeOut;
       if (this.fadeOut) {
-        if (uniforms.uTime.value > this.fadeOutThreshold) {
+        if (uniforms.uTime.value > fadeOutThreshold) {
           uniforms.uTime.value -= this.fadeSpeed;
         }
         else {
           this.fadeOut = false;
-          uniforms.uTime.value = this.fadeOutThreshold;
+          uniforms.uTime.value = fadeOutThreshold;
         }
       }
       else {
-        if (uniforms.uTime.value < this.fadeInThreshold) {
+        if (uniforms.uTime.value < fadeInThreshold) {
           uniforms.uTime.value += this.fadeSpeed;
         }
       }
@@ -211,7 +203,6 @@ export class EffectManager{
         this.cameraDir.applyQuaternion(this.camera.quaternion);
         this.cameraDir.normalize();
         uniforms.cameraDir.value.copy(this.cameraDir);
-        uniforms.cameraQuaternion.value.copy(this.camera.quaternion);
         uniforms.eye.value.copy(this.camera.position);
       }
       
