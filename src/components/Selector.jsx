@@ -429,11 +429,11 @@ export default function Selector({templateInfo, animationManager, effectManager}
         }
       }
     })
-    
+    effectManager.playFadeOut();
     // if there was a previous loaded model, remove it (maybe also remove loaded textures?)
     if (avatar){
       if (avatar[traitData.name] && avatar[traitData.name].vrm) {
-        effectManager.playFadeOut();
+        
         //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
         setTimeout(() => {
           disposeVRM(avatar[traitData.name].vrm)
