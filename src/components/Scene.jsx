@@ -139,6 +139,8 @@ export default function Scene({sceneModel}) {
     setIsLoaded(true)
     loaded = true
 
+    console.log("=====here====")
+    console.log(scene)
     scene.add(sceneModel);
 
     // add a camera to the scene
@@ -220,7 +222,7 @@ export default function Scene({sceneModel}) {
     return () => {
       removeEventListener("mousemove", handleMouseMove)
       removeEventListener("resize", handleMouseMove)
-      scene.remove(sceneModel)
+      //scene.remove(sceneModel)
       scene.remove(model)
     }
   }, [])

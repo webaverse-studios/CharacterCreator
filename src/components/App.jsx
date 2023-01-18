@@ -14,8 +14,10 @@ import ARButton from "./ARButton"
 import Background from "./Background"
 import ChatButton from "./ChatButton"
 import { UserMenu } from "./UserMenu"
+import { Object3D } from "three"
 
 import Logo from "./Logo"
+
 
 // dynamically import the manifest
 const assetImportPath = import.meta.env.VITE_ASSET_PATH + "/manifest.json"
@@ -41,16 +43,46 @@ async function fetchScene () {
       return gltf.scene
 }
 
-async function fetchAnimation(templateInfo){
+async function fetchAnimation(templateInfo, scene){
     // create an animation manager for all the traits that will be loaded
     const newAnimationManager = new AnimationManager(templateInfo.offset)
-    await newAnimationManager.loadAnimations(templateInfo.animationPath)
+    await newAnimationManager.loadAnimations(templateInfo.animationPath, scene)
     return newAnimationManager
+}
+
+async function fetchDecorativeModels(templateInfo, animManager){
+  console.log(animManager)
+  getAsArray(templateInfo.modelAppDecors).map(async (modelApp)=>{
+    console.log(modelApp)
+    const metaversefileLocation = modelApp.metaversefile
+    console.log(metaversefileLocation)
+    const response = await fetch(metaversefileLocation)
+    const data = await response.json()
+
+    let gltf = null;
+    if (modelApp.model){
+      const modelPath = modelApp.model;
+      console.log(modelPath)
+      const loader = new GLTFLoader();
+      // load the modelPath
+      gltf = await loader.loadAsync(modelPath);
+      console.log(gltf)
+    }
+    if (gltf != null){
+      if (modelApp.boneAttachment)
+       animManager.attachGLTF(gltf, modelApp.boneAttachment, modelApp.appAnimation, modelApp.position, modelApp.rotation, modelApp.scale)
+    }
+    console.log(data)
+  })
+ 
 }
 
 async function fetchAll() {
   const manifest = await fetchManifest()
-  const sceneModel = await fetchScene()
+  const sceneModel = new Object3D()
+  const decorModels = await fetchScene()
+
+  sceneModel.add(decorModels);
 
   // check if templateIndex is set in localStorage
   // if not, set it to a random index
@@ -64,7 +96,9 @@ async function fetchAll() {
   }
   const tempInfo = manifest[templateIndex]
 
-  const animManager = await fetchAnimation(tempInfo)
+  const animManager = await fetchAnimation(tempInfo, sceneModel)
+
+  const modelAppDecors = await fetchDecorativeModels(tempInfo, animManager, sceneModel)
 
   // check if initialTraits is set in localStorage
   // if not, set it to a random index

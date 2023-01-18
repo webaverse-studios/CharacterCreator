@@ -68,6 +68,7 @@ export class AnimationManager{
     this.curAnimID = 0;
     this.animationControls = [];
     this.started = false;
+    this.scene = null;
     if (offset){
       this.offset = new Vector3(
         offset[0],
@@ -77,16 +78,25 @@ export class AnimationManager{
     }
     this.update();
   }
-  async loadAnimations(path){
+  async loadAnimations(path, scene = null){
     const loader = path.endsWith('.fbx') ? fbxLoader : gltfLoader;
     const anim = await loader.loadAsync(path);
+    console.log("anim is:", anim)
+    
+    if (scene != null){
+      scene.attach(anim);
+    }
     // offset hips
-    this.animations = anim.animations;
+    this.animations = [...anim.animations];
+    this.scene = anim;
+
+    anim.scale.set(0.01,0.01,0.01)
+
+    this.mainControl = new AnimationControl(this, anim, anim.animations, this.curAnimID, this.lastAnimID)
+
     if (this.offset)
       this.offsetHips();
 
-
-    this.mainControl = new AnimationControl(this, anim, anim.animations, this.curAnimID, this.lastAnimID)
     this.animationControls.push(this.mainControl)
   
   }
@@ -94,15 +104,16 @@ export class AnimationManager{
   offsetHips(){
     this.animations.forEach(anim => {
       for (let i =0; i < anim.tracks.length; i++){
-        const track = anim.tracks[i];
+        const track = anim.tracks[i].clone();
         if (track.name === "hips.position"){
           for (let j = 0; j < track.values.length/3 ; j++){
             const base = j*3;
-            track.values[base] = track.values[base] + this.offset.x;
-            track.values[base + 1] = track.values[base + 1] + this.offset.y;
-            track.values[base + 2] = track.values[base + 2] + this.offset.z;
+            track.values[base] = (track.values[base] + this.offset.x)/100;
+            track.values[base + 1] = (track.values[base + 1] + this.offset.y)/100;
+            track.values[base + 2] = (track.values[base + 2] + this.offset.z)/100;
           }
         }
+        anim.tracks[i] = track;
       }
     });
   }
@@ -146,6 +157,28 @@ export class AnimationManager{
       if (ind != -1)
         this.animationControls.splice(ind,1);
     }
+  }
+
+  attachGLTF(model, boneAttachment, modelAnimation, positionArray, rotationArray, scaleArray){
+    console.log()
+    console.log(this.mainControl)
+    console.log(model)
+    //this.scene.children[0].children[0].children[0].children[0].children[0].children[0].attach(model.scene)
+    //console.log(this.scene.children[0].children[0].children[0])
+    const bone = this.scene.getObjectByName(boneAttachment)
+    const rad = Math.PI/180;
+   if (bone){
+      bone.add(model.scene)
+      model.scene.position.set(positionArray[0]*100,positionArray[1]*100,positionArray[2]*100)
+      model.scene.scale.set(scaleArray[0]*100,scaleArray[0]*100,scaleArray[0]*100)
+      model.scene.rotation.set(rotationArray[0] * rad,rotationArray[1] * rad,rotationArray[2] * rad)
+    }
+   // else
+      //console.warn(`No bone with name ${boneAttachment} was found`)
+    
+    //console.log("bone is", bone)
+    console.log(boneAttachment)
+    console.log(modelAnimation)
   }
 
   dispose(){
