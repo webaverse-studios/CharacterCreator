@@ -61,6 +61,7 @@ export class AnimationManager{
     this.mainControl = null;
     this.animationControl  = null;
     this.animations = null;
+    this.randomAnimations = [];
     this.weightIn = null;
     this.weightOut = null;
     this.offset = null;
@@ -91,6 +92,18 @@ export class AnimationManager{
   
   }
 
+  async loadRandomAnimations(paths){
+    paths.map(async (path)=>{
+
+      const loader = path.endsWith('.fbx') ? fbxLoader : gltfLoader;
+      const anim = await loader.loadAsync(path);
+
+      this.randomAnimations.push(anim.animations)
+        //if (this.offset)
+          //this.offsetHips();
+    })  
+  }
+
   offsetHips(){
     this.animations.forEach(anim => {
       for (let i =0; i < anim.tracks.length; i++){
@@ -108,6 +121,16 @@ export class AnimationManager{
   }
 
   startAnimation(vrm){
+
+    //console.log(vrm.scene.children)
+    vrm.scene.traverse((child)=>{
+      
+      if (child.skeleton){
+        console.log(child)
+        console.log(child.skeleton.bones.length)
+      }
+      //if (typeof())
+    })
     //return
     if (!this.animations) {
       console.warn("no animations were preloaded, ignoring");
@@ -173,6 +196,7 @@ export class AnimationManager{
           animControl.to.reset();
         })
       }
+      console.log("set random animation")
       this.animRandomizer(this.animations[this.curAnimID].duration - interpolationTime);
     }, (yieldTime * 1000));
   }
