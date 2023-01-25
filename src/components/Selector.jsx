@@ -55,7 +55,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
   const [restrictions, setRestrictions] = useState(null)
 
   useEffect(() => {
-    //setSelectedOptions (getMultipleRandomTraits(initialTraits))
     setRestrictions(getRestrictions());
   },[templateInfo])
 

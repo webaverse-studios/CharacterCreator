@@ -74,10 +74,14 @@ export default function Editor({manifest, templateInfo, initialTraits, animation
   }
   const selectClass = (ind) => {
     fetchNewModel(ind).then((template)=>{
-
-      //console.log(template)
-      initialTraits = initialTraits = [...new Set([...getAsArray(template.requiredTraits), ...getAsArray(template.randomTraits)])]
-      setSelectedOptions (getMultipleRandomTraits(initialTraits,template))
+      const prevOptions = loadUserSelection(template.name)
+      if (prevOptions != null)
+        setSelectedOptions(prevOptions)
+      else{
+        initialTraits = initialTraits = [...new Set([...getAsArray(template.requiredTraits), ...getAsArray(template.randomTraits)])]
+        setSelectedOptions (getMultipleRandomTraits(initialTraits,template))
+      }
+      
     })
   }
   const getClassOptions = () =>{
