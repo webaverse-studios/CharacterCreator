@@ -152,6 +152,13 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       }
     }
     if (option.avatarIndex != null){
+      if (avatar){
+        for (const prop in avatar){
+          if (avatar[prop].vrm)
+            disposeVRM (avatar[prop].vrm)
+        }
+        setAvatar({})
+      }
       selectClass(option.avatarIndex)
       return
     }
