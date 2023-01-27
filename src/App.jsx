@@ -144,10 +144,9 @@ export default function App() {
 
   const [hideUi, setHideUi] = useState(false)
 
-  const [templateInfo, setTemplateInfo] = useState(tempInfo)
   const [animationManager, setAnimationManager] = useState(animManager)
 
-  const { camera, scene } = useContext(SceneContext)
+  const { camera, scene, templateInfo, setTemplateInfo} = useContext(SceneContext)
   effectManager.camera = camera
   effectManager.scene = scene
 
@@ -156,6 +155,10 @@ export default function App() {
   // detect a double tap on the screen or a mouse click
   // switch the UI on and off
   let lastTap = 0
+
+  useEffect(() => { 
+    setTemplateInfo(tempInfo)
+  }, [])
 
   useEffect(() => {
     const handleTap = (e) => {
