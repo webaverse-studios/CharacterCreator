@@ -52,6 +52,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
   const [selectValue, setSelectValue] = useState("0")
   const [loadPercentage, setLoadPercentage] = useState(1)
   const [restrictions, setRestrictions] = useState(null)
+  const [currentAvatarIndex, setCurrentAvatarIndex] = useState(1) // todo: based on initial selection.
 
   useEffect(() => {
     //setSelectedOptions (getMultipleRandomTraits(initialTraits))
@@ -148,13 +149,18 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       }
     }
     
+    debugger
     if (option.avatarIndex != null){
-      effectManager.setTransitionEffect('fade_out_avatar');
+      if (option.avatarIndex !== currentAvatarIndex) {
+        setCurrentAvatarIndex(option.avatarIndex);
 
-      // play avatar fade out effect
-      effectManager.playFadeOutEffect();
+        effectManager.setTransitionEffect('fade_out_avatar');
 
-      selectClass(option.avatarIndex)
+        // play avatar fade out effect
+        effectManager.playFadeOutEffect();
+
+        selectClass(option.avatarIndex)
+      }
       return
     }
 

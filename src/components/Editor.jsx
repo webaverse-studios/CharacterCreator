@@ -90,6 +90,7 @@ export default function Editor({manifest, templateInfo, initialTraits, animation
   }
 
   const getMultipleRandomTraits = (traitNames, customTemplateInfo = null) => {
+    debugger
     const resultTraitOptions = []
 
     const template = customTemplateInfo || templateInfo
