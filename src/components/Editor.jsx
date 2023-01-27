@@ -2,11 +2,10 @@ import React, { Fragment, useEffect, useContext } from "react";
 
 import * as THREE from "three"
 import gsap from 'gsap';
-import useSound from 'use-sound';
-import optionClick from "../../public/sound/option_click.wav";
 import shuffle from "../../public/ui/traits/shuffle.svg";
 import { AudioContext } from "../context/AudioContext";
 import { SceneContext } from "../context/SceneContext";
+import { SoundContext } from "../context/SoundContext"
 import { getAsArray } from "../library/utils"
 
 import styles from './Editor.module.css';
@@ -15,22 +14,21 @@ import Selector from "./Selector"
 
 export default function Editor({manifest, templateInfo, initialTraits, animationManager, blinkManager, effectManager, fetchNewModel}) {
   const {currentTraitName, setCurrentTraitName, setCurrentOptions, setSelectedOptions, setRemoveOption, controls, loadUserSelection} = useContext(SceneContext);
+  const {
+    playSound
+  } = useContext(SoundContext)
 
   const {isMute} = useContext(AudioContext);
 
   const [cameraFocused, setCameraFocused] = React.useState(false)
 
-  const [play] = useSound(
-    optionClick,
-    { volume: 1.0 }
-  );
     // options are selected by random or start
   useEffect(() => {
       setSelectedOptions (loadUserSelection(templateInfo.name) || getMultipleRandomTraits(initialTraits))
   },[initialTraits])
 
   const selectOption = (option) => {
-    !isMute && play();
+    !isMute && playSound('optionClick');
     if (option.name === currentTraitName){ 
       if (cameraFocused) {
         moveCamera(option.cameraTarget);
@@ -208,7 +206,7 @@ export default function Editor({manifest, templateInfo, initialTraits, animation
     <Fragment>
     <div className={styles['SideMenu']}>
     <img className={currentTraitName !== "_class" ? styles['ShuffleOption'] : styles['ShuffleOptionActive']} onClick={() => {
-              !isMute && play();
+              !isMute && playSound('optionClick');
               selectClassOption();
             }} src={shuffle} />
     <div className={styles['LineDivision']}/>

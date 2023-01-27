@@ -7,6 +7,7 @@ import { AudioProvider } from "./context/AudioContext"
 import { AccountProvider } from "./context/AccountContext"
 import { SceneProvider } from "./context/SceneContext"
 import { ViewProvider } from "./context/ViewContext"
+import { SoundProvider } from "./context/SoundContext"
 
 import LoadingOverlay from "./components/LoadingOverlay"
 
@@ -26,9 +27,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <ViewProvider>
             <SceneProvider>
             <LoadingOverlay />
-              <Suspense>
-                <App />
-              </Suspense>
+              <SoundProvider>
+                <Suspense>
+                  <App />
+                </Suspense>
+              </SoundProvider>
             </SceneProvider>
           </ViewProvider>
         </AudioProvider>
