@@ -283,6 +283,7 @@ export class EffectManager{
   }
 
   playFadeOutEffect() {
+    debugger
     globalUniforms.transitionEffectType.value = transitionEffectTypeNumber.fadeOutAvatar;
     this.particleEffect.emitPixel();
     this.particleEffect.emitTeleport();
@@ -291,11 +292,13 @@ export class EffectManager{
   }
 
   playFadeInEffect() {
+    debugger
     this.particleEffect.removeSpotLight();
     globalUniforms.transitionEffectType.value = transitionEffectTypeNumber.fadeInAvatar;
   }
 
   playSwitchItemEffect() {
+    debugger
     globalUniforms.switchItemTime.value = SWITCH_ITEM_EFFECT_INITIAL_TIME;
     globalUniforms.transitionEffectType.value = transitionEffectTypeNumber.switchItem;
     this.particleEffect.emitPixel();

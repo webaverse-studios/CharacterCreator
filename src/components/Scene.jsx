@@ -5,6 +5,7 @@ import { CameraMode } from "../context/ViewContext"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 export default function Scene({sceneModel}) {
+  // debugger
   const {
     scene,
     model, setModel,

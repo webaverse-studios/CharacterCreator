@@ -5,6 +5,7 @@ import Editor from '../components/Editor';
 import CustomButton from '../components/custom-button'
 
 function Appearance({manifest, templateInfo, initialTraits, animationManager, blinkManager, effectManager, fetchNewModel}) {
+    debugger
     const { setViewMode } = React.useContext(ViewContext);
 
     const back = () => {
@@ -15,6 +16,10 @@ function Appearance({manifest, templateInfo, initialTraits, animationManager, bl
     const next = () => {
         console.log('next');
         setViewMode(ViewMode.BIO)
+    }
+
+    const randomize = () => {
+        Editor.randomizeCurrentCharacter(); // todo: wrong.
     }
 
     return (
@@ -47,6 +52,7 @@ function Appearance({manifest, templateInfo, initialTraits, animationManager, bl
                     text="Randomize"
                     size={14}
                     className={styles.buttonCenter}
+                    onClick={randomize}
                 />
             </div>
         </div>

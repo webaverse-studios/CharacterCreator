@@ -52,8 +52,11 @@ async function fetchAnimation(templateInfo) {
 }
 
 async function fetchAll() {
+  debugger
   const manifest = await fetchManifest()
+  debugger
   const sceneModel = await fetchScene()
+  debugger
 
   // check if templateIndex is set in localStorage
   // if not, set it to a random index
@@ -65,6 +68,7 @@ async function fetchAll() {
   } else {
     templateIndex = parseInt(templateIndex)
   }
+  debugger
   const tempInfo = manifest[templateIndex]
 
   const animManager = await fetchAnimation(tempInfo)
@@ -72,6 +76,7 @@ async function fetchAll() {
   // check if initialTraits is set in localStorage
   // if not, set it to a random index
   let initialTraits = localStorage.getItem("initialTraits")
+  debugger
   if (!initialTraits) {
     initialTraits = initialTraits = [
       ...new Set([
@@ -100,6 +105,7 @@ async function fetchAll() {
 }
 
 const fetchData = () => {
+  debugger
   let status, result
 
   const manifestPromise = fetchAll()
@@ -130,6 +136,7 @@ const fetchData = () => {
 const resource = fetchData()
 
 export default function App() {
+  debugger
   const {
     manifest,
     sceneModel,
@@ -139,6 +146,7 @@ export default function App() {
     blinkManager,
     effectManager,
   } = resource.read()
+  debugger
 
   const { viewMode } = useContext(ViewContext)
 
@@ -176,9 +184,11 @@ export default function App() {
   }, [hideUi])
 
   const fetchNewModel = (index) => {
+    debugger
     return new Promise((resolve) => {
       asyncResolve()
       async function asyncResolve() {
+        debugger
         setTemplateInfo(manifest[index])
         const animManager = await fetchAnimation(manifest[index])
         setAnimationManager(animManager)

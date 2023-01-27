@@ -16,6 +16,7 @@ const pinataSecretApiKey = import.meta.env.VITE_PINATA_API_SECRET
 const mintCost = 0.01
 
 export default function MintPopup() {
+  debugger
   const { avatar, skinColor, model, templateInfo } = useContext(SceneContext)
   const { walletAddress } = useContext(AccountContext)
 

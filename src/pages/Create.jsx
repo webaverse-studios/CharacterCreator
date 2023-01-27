@@ -12,6 +12,7 @@ function Create() {
   }
 
   const selectClass = (characterClass) => {
+    debugger
     console.log("TODO: set character class to: " + characterClass)
     setViewMode(ViewMode.APPEARANCE)
   }

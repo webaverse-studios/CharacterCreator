@@ -16,6 +16,7 @@ import { TokenBox } from "./token-box/TokenBox"
 
 
 export default function Editor({manifest, templateInfo, initialTraits, animationManager, blinkManager, effectManager, fetchNewModel}) {
+  debugger
   const {currentTraitName, setCurrentTraitName, setCurrentOptions, setSelectedOptions, setRemoveOption, controls, loadUserSelection} = useContext(SceneContext);
 
   /*const fetchNewModel = (index) =>{
@@ -45,6 +46,7 @@ export default function Editor({manifest, templateInfo, initialTraits, animation
   const [play] = useSound(optionClick, { volume: 1.0 })
   // options are selected by random or start
   useEffect(() => {
+    debugger
     setSelectedOptions(
       loadUserSelection(templateInfo.name) ||
         getMultipleRandomTraits(initialTraits),
@@ -109,6 +111,7 @@ export default function Editor({manifest, templateInfo, initialTraits, animation
     return resultTraitOptions
   }
   const selectClass = (ind) => {
+    debugger
     fetchNewModel(ind).then((template) => {
       //console.log(template)
       initialTraits = [...new Set([...getAsArray(template.requiredTraits), ...getAsArray(template.randomTraits)])]
