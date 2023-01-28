@@ -159,6 +159,7 @@ export class AnimationManager{
 
   animRandomizer(yieldTime){
     setTimeout(() => {
+      // console.log('timeout 6')
       this.lastAnimID = this.curAnimID;
       this.curAnimID = getRandomInt(this.animations.length);
       if (this.curAnimID != this.lastAnimID){

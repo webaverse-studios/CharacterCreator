@@ -130,6 +130,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       })
       const finalAvatar = {...avatar, ...newAvatar}
       setTimeout(() => {
+        console.log('timeout 1')
         if (Object.keys(finalAvatar).length > 0) {
           cullHiddenMeshes(finalAvatar)
         }
@@ -177,6 +178,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       
       const finalAvatar = {...avatar, ...newAvatar}
       setTimeout(() => {
+        console.log('timeout 2')
         if (Object.keys(finalAvatar).length > 0) {
           cullHiddenMeshes(finalAvatar)
         }
@@ -369,6 +371,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       if (avatar){
         if ( avatar[traitData.name] && avatar[traitData.name].vrm ){
           setTimeout(() => {
+            console.log('timeout 3')
             disposeVRM(avatar[traitData.name].vrm)
             setSelectValue("")
           }, effectManager.transitionTime)
@@ -488,6 +491,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       if (avatar[traitData.name] && avatar[traitData.name].vrm) {
         //if (avatar[traitData.name].vrm != vrm)  // make sure its not the same vrm as the current loaded
         setTimeout(() => {
+          console.log('timeout 4')
           disposeVRM(avatar[traitData.name].vrm)
           // // play avatar fade in effect
           // !effectManager.getTransitionEffect('switch_item') && effectManager.playFadeInEffect();
@@ -503,6 +507,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       model.add(m)
       animationManager.update(); // note: update animation to prevent some frames of T pose at start.
       setTimeout(() => {
+        console.log('timeout 5')
         // update the joint rotation of the new trait
         const event = new Event('mousemove');
         event.x = mousePosition.x;
