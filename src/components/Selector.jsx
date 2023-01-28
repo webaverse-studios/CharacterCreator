@@ -56,6 +56,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
   const [restrictions, setRestrictions] = useState(null)
 
   useEffect(() => {
+    console.log('useEffect: setRestrictions')
     //setSelectedOptions (getMultipleRandomTraits(initialTraits))
     setRestrictions(getRestrictions());
     
@@ -140,17 +141,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
 
   // options are selected by random or start
   useEffect(() => {
-    console.log('useEffect: Selector.jsx:', selectedOptions.length)
-    if (selectedOptions.length > 0){
-      debugger
-      if (selectedOptions.length > 1){
-        effectManager.setTransitionEffect('fade_out_avatar');
-        effectManager.playFadeOutEffect();
-      }
-
-      loadSelectedOptions(selectedOptions)
-      setSelectedOptions([]);
-    }
 
   },[selectedOptions])
   // user selects an option

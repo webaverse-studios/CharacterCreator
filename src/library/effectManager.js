@@ -64,7 +64,7 @@ const customUniforms = {
 };
 
 
-export class EffectManager{
+class EffectManager{
   constructor () {
     this.cameraDir = new THREE.Vector3();
     this.frameRate = 1000 / 30;
@@ -399,3 +399,5 @@ export class EffectManager{
     }, this.frameRate);
   }
 }
+
+export const effectManager = new EffectManager;

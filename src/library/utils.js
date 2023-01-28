@@ -8,6 +8,7 @@ import { combine } from "./merge-geometry";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { VRMHumanBoneName } from "@pixiv/three-vrm";
+import { effectManager } from './effectManager';
 
 export function getAsArray(target) {
   if (target == null) return []
@@ -460,4 +461,19 @@ const describe = (function () {
 })();
 export function describeObject3D(root) {
     return traverseWithDepth({ object3D: root, callback: describe, result: [] }).join("\n");
+}
+
+// options are selected by random or start
+export async function setSelectedOptions(selectedOptions) {
+  console.log('useEffect: Selector.jsx:', selectedOptions.length)
+  if (selectedOptions.length > 0){
+    debugger
+    if (selectedOptions.length > 1){
+      effectManager.setTransitionEffect('fade_out_avatar');
+      effectManager.playFadeOutEffect();
+    }
+
+    await loadSelectedOptions(selectedOptions)
+    setSelectedOptions([]);
+  }
 }
