@@ -2,11 +2,10 @@ import React, { Fragment, useEffect, useContext } from "react"
 
 import * as THREE from "three"
 import gsap from "gsap"
-import useSound from "use-sound"
-import optionClick from "../../public/sound/option_click.wav"
 import shuffle from "../../public/ui/traits/shuffle.svg"
 import { AudioContext } from "../context/AudioContext"
 import { SceneContext } from "../context/SceneContext"
+import { SoundContext } from "../context/SoundContext"
 import { getAsArray } from "../library/utils"
 
 import styles from "./Editor.module.css"
@@ -31,18 +30,19 @@ export default function Editor({manifest, templateInfo, animationManager, blinkM
         setTemplateInfo(manifest[index])
         const animManager = await fetchAnimation(manifest[index])
         setAnimationManager(animManager)
-        setTimeout(()=>{
-          resolve (manifest[index])
-        }, 2000)
+        resolve (manifest[index])
       }
     })
   }*/
   
   const { isMute } = useContext(AudioContext)
 
+  const {
+    playSound
+  } = useContext(SoundContext)
+
   const [cameraFocused, setCameraFocused] = React.useState(false)
 
-  const [play] = useSound(optionClick, { volume: 1.0 })
   // options are selected by random or start
   useEffect(() => {
     if (awaitDisplay){
@@ -66,7 +66,7 @@ export default function Editor({manifest, templateInfo, animationManager, blinkM
   }
 
   const selectOption = (option) => {
-    !isMute && play()
+    !isMute && playSound('optionClick');
     if (option.name === currentTraitName) {
       if (cameraFocused) {
         moveCamera(option.cameraTarget)
@@ -304,7 +304,7 @@ export default function Editor({manifest, templateInfo, animationManager, blinkM
                 icon={shuffle}
                 rarity={currentTraitName !== "_class" ? "none" : "mythic"}
                 onClick={() => {
-                  !isMute && play()
+                  !isMute && playSound('optionClick');
                   selectClassOption()
                 }}
               />

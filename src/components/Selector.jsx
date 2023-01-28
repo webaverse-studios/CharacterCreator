@@ -2,15 +2,14 @@ import React, { useContext, useEffect, useState } from "react"
 import * as THREE from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
-import useSound from "use-sound"
 import cancel from "../../public/ui/selector/cancel.png"
 import { addModelData, disposeVRM } from "../library/utils"
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, SAH } from 'three-mesh-bvh';
 import {ViewContext} from "../context/ViewContext"
-import sectionClick from "../../public/sound/section_click.wav"
 import tick from "../../public/ui/selector/tick.svg"
 import { AudioContext } from "../context/AudioContext"
 import { SceneContext } from "../context/SceneContext"
+import { SoundContext } from "../context/SoundContext"
 import {
   renameVRMBones,
   createFaceNormals,
@@ -46,6 +45,9 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
     removeOption,
     saveUserSelection
   } = useContext(SceneContext)
+  const {
+    playSound
+  } = useContext(SoundContext)
   const { isMute } = useContext(AudioContext)
   const {setLoading} = useContext(ViewContext)
 
@@ -226,9 +228,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       loadingManager.onLoad = function (){
         setLoadPercentage(0)
         resolve(resultData);
-        setTimeout(() => {
-          setLoading(false)
-        }, 1000);
+        setLoading(false)
       };
       loadingManager.onError = function (url){
         console.warn("error loading " + url)
@@ -499,6 +499,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
       m.visible = false;
       // add the now model to the current scene
       model.add(m)
+      animationManager.update(); // note: update animation to prevent some frames of T pose at start.
       setTimeout(() => {
         // update the joint rotation of the new trait
         const event = new Event('mousemove');
@@ -511,6 +512,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
         // play transition effect
         if (effectManager.getTransitionEffect('switch_item')) {
           effectManager.playSwitchItemEffect();
+          !isMute && playSound('switchItem');
         }
         else {
           effectManager.playFadeInEffect();
@@ -534,7 +536,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
 
   }
 
-  const [play] = useSound(sectionClick, { volume: 1.0 })
   
   // if head <Skin templateInfo={templateInfo} avatar={avatar} />
 
@@ -561,7 +562,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
           if (effectManager.getTransitionEffect('normal')) {
             selectTraitOption(null) 
             effectManager.setTransitionEffect('normal');
-            !isMute && play()
           }
         }}
       >
@@ -596,7 +596,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
                     styles["selector-button"]
                   } ${active ? styles["active"] : ""}`}
                   onClick={() => {
-                    !isMute && play()
                     if (effectManager.getTransitionEffect('normal')){
                       selectTraitOption(option)
                       setLoadPercentage(1)
