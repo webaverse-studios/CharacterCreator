@@ -92,8 +92,8 @@ export default function MintPopup({screenshotPosition}) {
   const mintAsset = async (avatar) => {
     let walletAddress = await connectWallet()
 
-    const pass = await checkOT(walletAddress);
-    if(pass) {
+    // const pass = await checkOT(walletAddress);
+    if(walletAddress) {
       setMintStatus("Uploading...")
       console.log('avatar in mintAsset', avatar)
       let imageHash, glbHash;
