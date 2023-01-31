@@ -148,7 +148,6 @@ export default function Bio() {
         })}
       </select>
       <textarea
-        type="text"
         name="response1"
         onChange={(e) => setResponse1(e.target.value)}
         defaultValue={response1}
@@ -170,12 +169,10 @@ export default function Bio() {
       </select>
 
       <textarea
-        type="text"
         name="response1"
+        defaultValue={response2}
         onChange={(e) => setResponse2(e.target.value)}
-      >
-        {response2}
-      </textarea>
+      />
 
       <label htmlFor="question3">Question 3</label>
       <select
@@ -193,12 +190,10 @@ export default function Bio() {
       </select>
 
       <textarea
-        type="text"
         name="response3"
+        defaultValue={response3}
         onChange={(e) => setResponse3(e.target.value)}
-      >
-        {response3}
-      </textarea>
+      />
     </div>
   )
 }

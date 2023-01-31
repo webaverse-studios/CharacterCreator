@@ -7,15 +7,17 @@ import CustomButton from '../components/custom-button'
 
 function Appearance({manifest, initialTraits, animationManager, blinkManager, effectManager, fetchNewModel}) {
     const { setViewMode } = React.useContext(ViewContext);
-    const { resetAvatar, getRandomCharacter } = React.useContext(SceneContext)
-    const [isRandomizing, setIsRandomizing] = React.useState(true) // note: will do "fade in avatar" at start.
+    const { resetAvatar, getRandomCharacter, isLoading, setIsLoading } = React.useContext(SceneContext)
     const back = () => {
         console.log('back 1');
         resetAvatar();
         setViewMode(ViewMode.CREATE)
     }
+    effectManager.addEventListener('fadeintraitend', () => {
+        setIsLoading(false);
+    })
     effectManager.addEventListener('fadeinavatarend', () => {
-        setIsRandomizing(false);
+        setIsLoading(false);
     })
 
     const next = () => {
@@ -24,16 +26,18 @@ function Appearance({manifest, initialTraits, animationManager, blinkManager, ef
     }
 
     const randomize = () => {
-        if (!isRandomizing) {
-            setIsRandomizing(true);
+        if (!isLoading) {
             getRandomCharacter()
         }
     }
 
     return (
         <div className={styles.container}>
+            <div className={`loadingIndicator ${isLoading?"active":""}`}>
+                <img className={"rotate"} src="ui/loading.svg"/>
+            </div>
             <div className={"sectionTitle"}>Choose Appearance</div>
-        <Editor manifest = {manifest} animationManager={animationManager} initialTraits={initialTraits} blinkManager={blinkManager} effectManager={effectManager} fetchNewModel={fetchNewModel} />
+            <Editor manifest = {manifest} animationManager={animationManager} initialTraits={initialTraits} blinkManager={blinkManager} effectManager={effectManager} fetchNewModel={fetchNewModel} />
             <div className={styles.buttonContainer}>
                 <CustomButton
                     theme="light"
