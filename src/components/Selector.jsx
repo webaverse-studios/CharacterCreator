@@ -77,7 +77,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
           },
           trait:templateInfo.traits.find((t) => t.name === "body")
         }
-        console.log(option)
         loadOptions([option], false, false, false).then((loadedData)=>{
           URL.revokeObjectURL(url);
           let newAvatar = {};
@@ -155,7 +154,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
   }
 
   const loadSelectedOptions = (opts) => {
-    console.log(opts)
     loadOptions(opts).then((loadedData)=>{
       
       let newAvatar = {};
@@ -399,7 +397,6 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
 
   // once loaded, assign
   const itemAssign = (itemData) => {
-    console.log(itemData)
     const item = itemData.item;
     const traitData = itemData.trait;
     const models = itemData.models;
