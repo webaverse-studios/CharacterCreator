@@ -79,7 +79,8 @@ export class EffectManager extends EventTarget{
   }
 
   setCustomShader(material) {
-    
+    if (!material)
+      return
     material.vertexShader = material.vertexShader.replace(
       `varying vec3 vViewPosition;`,
       `
