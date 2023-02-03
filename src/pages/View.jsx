@@ -23,6 +23,7 @@ function View({
 
   return (
     <div className={styles.container}>
+      
       <div className={"sectionTitle"}>Chat With Your Character</div>
       <div className={styles.chatContainer}>
         <div className={styles.topLine} />

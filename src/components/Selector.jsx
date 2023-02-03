@@ -27,10 +27,11 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-export default function Selector({templateInfo, animationManager, blinkManager, isNewClass, effectManager, selectClass}) {
+export default function Selector({templateInfo, animationManager, blinkManager, isNewClass, effectManager, selectClass, loadCustomTrait}) {
   const {
     avatar,
     setAvatar,
+    resetAvatar,
     currentTraitName,
     currentOptions,
     selectedOptions,
@@ -61,6 +62,36 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
     setRestrictions(getRestrictions());
 
   },[templateInfo])
+
+  useEffect(() => {
+    if (loadCustomTrait != null){
+      if (loadCustomTrait[0].name.endsWith(".vrm")){
+        resetAvatar()
+
+        const url = URL.createObjectURL(loadCustomTrait[0]);
+        const option = {
+          item:{
+            id:"upload",
+            name:"upload",
+            directory:url
+          },
+          trait:templateInfo.traits.find((t) => t.name === "body")
+        }
+        console.log(option)
+        loadOptions([option], false, false, false).then((loadedData)=>{
+          URL.revokeObjectURL(url);
+          let newAvatar = {};
+          loadedData.map((data)=>{
+            newAvatar = {...newAvatar, ...itemAssign(data)}
+          })
+          
+        })
+      }
+      else{
+        console.warn("not a vrm file")
+      }
+    }
+  }, [loadCustomTrait])
 
   const getRestrictions = () => {
 
@@ -124,7 +155,9 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
   }
 
   const loadSelectedOptions = (opts) => {
+    console.log(opts)
     loadOptions(opts).then((loadedData)=>{
+      
       let newAvatar = {};
       loadedData.map((data)=>{
         newAvatar = {...newAvatar, ...itemAssign(data)}
@@ -192,14 +225,14 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
 
   
   // load options first
-  const loadOptions = (options, filterRestrictions = true) => {
+  const loadOptions = (options, filterRestrictions = true, useTemplateBaseDirectory = true, saveUserSel = true) => {
     // filter options by restrictions
 
     if (filterRestrictions)
       options = filterRestrictedOptions(options);
 
     //save selection to local storage
-    saveUserSelection(templateInfo.name, options)
+    if (saveUserSel) saveUserSelection(templateInfo.name, options)
 
     // validate if there is at least a non null option
     let nullOptions = true;
@@ -247,7 +280,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
         setLoadPercentage(Math.round(loaded/total * 100 ))
       }
 
-      const baseDir = templateInfo.traitsDirectory// (maybe set in loading manager)
+      const baseDir = useTemplateBaseDirectory ? templateInfo.traitsDirectory : ""// (maybe set in loading manager)
 
       // load necesary assets for the options
       options.map((option, index)=>{
@@ -366,6 +399,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
 
   // once loaded, assign
   const itemAssign = (itemData) => {
+    console.log(itemData)
     const item = itemData.item;
     const traitData = itemData.trait;
     const models = itemData.models;

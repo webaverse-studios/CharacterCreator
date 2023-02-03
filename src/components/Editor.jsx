@@ -15,6 +15,7 @@ import {
 import styles from "./Editor.module.css"
 import Selector from "./Selector"
 import { TokenBox } from "./token-box/TokenBox"
+import DragDropFile from "./DragDropFile"
 
 
 export default function Editor({manifest, animationManager, blinkManager, effectManager, fetchNewModel}) {
@@ -28,6 +29,8 @@ export default function Editor({manifest, animationManager, blinkManager, effect
 
   const [cameraFocused, setCameraFocused] = React.useState(false)
 
+  const [loadCustomTrait, setLoadCustomTrait] = React.useState(null)
+
   // options are selected by random or start
   useEffect(() => {
     if (awaitDisplay){
@@ -38,7 +41,6 @@ export default function Editor({manifest, animationManager, blinkManager, effect
     }
     setCurrentTraitName(null)
   }, [templateInfo])
-
 
   const selectOption = (option) => {
     !isMute && playSound('optionClick');
@@ -111,7 +113,8 @@ export default function Editor({manifest, animationManager, blinkManager, effect
           </div>
         </div>
       </div>
-      <Selector animationManager={animationManager} templateInfo={templateInfo} blinkManager = {blinkManager} effectManager = {effectManager} selectClass = {selectClass} isNewClass = {isNewClass}/>
+      <DragDropFile setLoadedFiles = {setLoadCustomTrait}/>
+      <Selector animationManager={animationManager} templateInfo={templateInfo} blinkManager = {blinkManager} effectManager = {effectManager} selectClass = {selectClass} isNewClass = {isNewClass} loadCustomTrait = {loadCustomTrait}/>
     </Fragment>
   )
 }
