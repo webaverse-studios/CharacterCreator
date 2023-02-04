@@ -216,7 +216,7 @@ export default function App() {
     }
 
     if (!controls) return;
-    if ([ViewMode.APPEARANCE, ViewMode.SAVE, ViewMode.MINT].includes(viewMode)) {
+    if ([ViewMode.APPEARANCE, ViewMode.SAVE, ViewMode.MINT, ViewMode.CHAT].includes(viewMode)) {
       controls.enabled = true;
     } else {
       controls.enabled = false;
