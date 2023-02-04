@@ -83,7 +83,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
           loadedData.map((data)=>{
             newAvatar = {...newAvatar, ...itemAssign(data)}
           })
-          
+          setAvatar(newAvatar)
         })
       }
       else{
