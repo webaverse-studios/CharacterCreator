@@ -1,4 +1,5 @@
 import { VRMExpressionPresetName } from "@pixiv/three-vrm";
+import { Clock } from "three"
 
 const BoundingFrequencyMasc = [0, 400, 560, 2400, 4800]
 const BoundingFrequencyFem = [0, 500, 700, 3000, 6000]
@@ -15,45 +16,32 @@ for (let m = 0; m < BoundingFrequencyFem.length; m++) {
   IndicesFrequencyFemale[m] = Math.round(((2 * FFT_SIZE) / samplingFrequency) * BoundingFrequencyFem[m])
 }
 
-class AudioFile{
-  constructor(file){
-
-  }
-  start(){
-
-  }
-  stop(){
-
-  }
-}
-
 export class LipSync {
   constructor(vrm) {
     this.vrm = vrm
-    this.currentAudio = null
+    this.audioContext = new AudioContext()
+
+    this.prevAudioGain = this.audioContext.createGain()
+    this.prevAudioGain.connect(this.audioContext.destination)
+
+    this.fadeOutSeconds = 1
+    this.deltaTime = 0
+    const clock = new Clock(true);
+
+    this.lastAudio = null;
 
     const update = (deltaTime, elapsedTime) => {
       requestAnimationFrame(update)
       this.update(deltaTime, elapsedTime)
+      this.deltaTime = clock.getDelta();
     }
 
     update()
 
   }
 
-  // start(stream) {
-  //   console.log("starts")
-  //   this.audioContext = new AudioContext()
-  //   this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream)
-  //   this.meter = LipSync.createAudioMeter(this.audioContext)
-  //   this.mediaStreamSource.connect(this.meter)
-  // }
-
   startFromAudioFile(file) {
-    new AudioFile(file)
-    if(!this.audioContext) this.audioContext = new AudioContext()
-    this.gainNode = this.audioContext.createGain();
-    console.log(this.audioContext)
+    //new AudioFile(file)
 
     if(!this.userSpeechAnalyzer)
         this.userSpeechAnalyzer = this.audioContext.createAnalyser()
@@ -62,8 +50,13 @@ export class LipSync {
     
     
     if (this.mediaStreamSource){
-      console.log(this.mediaStreamSource.volume)
-      this.mediaStreamSource.stop()
+      if (this.lastAudio){
+        this.lastAudio.stop();
+      }
+
+      this.lastAudio = this.mediaStreamSource;
+      this.lastAudio.connect(this.prevAudioGain)
+      this.prevAudioGain.gain.value = 1.0;
     }
     this.audioContext.decodeAudioData(file).then((buffer) => {
         this.mediaStreamSource = this.audioContext.createBufferSource()
@@ -72,7 +65,6 @@ export class LipSync {
         this.mediaStreamSource.connect(this.meter)
         this.mediaStreamSource.connect(this.audioContext.destination)
         this.mediaStreamSource.start()
-
         // connect the output of mediaStreamSource to the input of userSpeechAnalyzer
         this.mediaStreamSource.connect(this.userSpeechAnalyzer)
     })
@@ -89,7 +81,16 @@ export class LipSync {
     return this.audioContext?.close().catch(() => {}) || Promise.resolve()
   }
 
-  update(deltaTime) {
+  update(elapsedTime) {
+    if (this.prevAudioGain){
+      console.log(this.prevAudioGain.gain.value)
+      if (this.prevAudioGain.gain.value > 0){
+        this.prevAudioGain.gain.value -= this.deltaTime/this.fadeOutSeconds;
+      }
+      else{
+        this.prevAudioGain.gain.value = 0
+      }
+    }
     if (this.meter) {
         
       const { volume } = this.meter
@@ -108,7 +109,7 @@ export class LipSync {
         this.vrm.expressionManager.setValue(VRMExpressionPresetName.Ee, ee)
         
         // update the shape keys
-        this.vrm.expressionManager.update(deltaTime)
+        this.vrm.expressionManager.update(elapsedTime)
       }
     }
   }
