@@ -8,7 +8,6 @@ import { AccountProvider } from "./context/AccountContext"
 import { SceneProvider } from "./context/SceneContext"
 import { ViewProvider } from "./context/ViewContext"
 
-import LoadingOverlay from "./components/LoadingOverlay"
 import { SoundProvider } from "./context/SoundContext"
 
 import App from "./App"

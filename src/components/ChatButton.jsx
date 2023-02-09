@@ -1,6 +1,5 @@
 import React, { useContext } from "react"
 import { ViewMode, ViewContext } from "../context/ViewContext"
-import styles from "./ChatButton.module.css"
 import { CustomButton } from "./custom-button"
 
 export default function ChatButton() {

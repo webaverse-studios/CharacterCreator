@@ -24,14 +24,16 @@ const SpeechRecognition =
   window.webkitSpeechRecognition || sepiaSpeechRecognitionInit(config)
 
 export default function ChatBox() {
-  const [micEnabled, setMicEnabled] = React.useState(false)
+  // const [micEnabled, setMicEnabled] = React.useState(false)
+  const { lipSync } = React.useContext(SceneContext)
 
+  const [input, setInput] = React.useState("")
+  const [messages, setMessages] = React.useState([])
   const [speechRecognition, setSpeechRecognition] = React.useState(false)
 
-  const name = localStorage.getItem("name")
-  const bio = localStorage.getItem("bio")
-  const voice = localStorage.getItem("voice")
-  const greeting = localStorage.getItem("greeting")
+  const templateId = localStorage.getItem("currentTemplateId")
+  const bio = localStorage.getItem(`${templateId}_bio`)
+  // const greeting = localStorage.getItem("greeting")
   const question1 = localStorage.getItem("question1")
   const question2 = localStorage.getItem("question2")
   const question3 = localStorage.getItem("question3")
@@ -39,43 +41,118 @@ export default function ChatBox() {
   const response2 = localStorage.getItem("response2")
   const response3 = localStorage.getItem("response3")
 
+  const bioObj = JSON.parse(bio)
+
   const [speaker, setSpeaker] = React.useState(
     localStorage.getItem("speaker") || defaultSpeaker,
   )
+
+  // function composePrompt() {
+  //   const prompt = `Name: ${name}
+  //     Bio: ${bio}
+  //     ${speaker}: Hey ${name}
+  //     ${name}: ${greeting}
+  //     ${speaker}: ${question1}
+  //     ${name}: ${response1}
+  //     ${speaker}: ${question2}
+  //     ${name}: ${response2}
+  //     ${speaker}: ${question3}
+  //     ${name}: ${response3}`
+
+  //   return prompt
+  // }
+
+  const handleChange = async (event) => {
+    event.preventDefault()
+    setInput(event.target.value)
+  }
+
+  // const startSpeech = () => {
+  //   console.info("starting speech")
+  //   speechRecognition.start()
+  //   setMicEnabled(true)
+  // }
+
+  // const stopSpeech = () => {
+  //   console.info("stopping speech")
+  //   speechRecognition.stop()
+  //   setMicEnabled(false)
+  // }
+
+  const handleSubmit = async (event) => {
+    if (event.preventDefault) event.preventDefault()
+    // Get the value of the input element
+    const input = event.target.elements.message
+    const value = input.value
+    handleUserChatInput(value)
+  }
+
+  const handleUserChatInput = async (value) => {
+    // Send the message to the localhost endpoint
+    const agent = bioObj.name
+    // const spell_handler = "charactercreator";
+
+    const newMessages = pruneMessages(messages)
+    newMessages.push(`${speaker}: ${value}`)
+    setInput("")
+    setMessages([...newMessages])
+
+    try {
+      // const url = encodeURI(`http://216.153.52.197:8001/spells/${spell_handler}`)
+
+      const endpoint = "https://upstreet.webaverse.com/api/ai"
+
+      let prompt = getPrompt(speaker, agent, newMessages, {
+        bio,
+        question1,
+        question2,
+        question3,
+        response1,
+        response2,
+        response3,
+      })
+
+      const query = {
+        prompt,
+        max_tokens: 250,
+        temperature: 0.9,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0.6,
+        stop: [speaker + ":", agent + ":", "\\n"],
+      }
+
+      axios.post(endpoint, query).then((response) => {
+        const output = response.data.choices[0].text.trim()
+        const ttsEndpoint =
+          "https://voice.webaverse.com/tts?" +
+          "s=" +
+          output +
+          "&voice=" +
+          voices[bioObj.voiceKey]
+
+        // fetch the audio file from ttsEndpoint
+        fetch(ttsEndpoint).then(async (response) => {
+          const blob = await response.blob()
+
+          // convert the blob to an array buffer
+          const arrayBuffer = await blob.arrayBuffer()
+          lipSync.startFromAudioFile(arrayBuffer)
+        })
+
+        setMessages([...newMessages, agent + ": " + output])
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   // on speaker changer, set local storage
   useEffect(() => {
     localStorage.setItem("speaker", speaker)
   }, [speaker])
 
-
-  function composePrompt() {
-
-    const prompt =
-`Name: ${name}
-Bio: ${bio}
-${speaker}: Hey ${name}
-${name}: ${greeting}
-${speaker}: ${question1}
-${name}: ${response1}
-${speaker}: ${question2}
-${name}: ${response2}
-${speaker}: ${question3}
-${name}: ${response3}`
-
-    return prompt
-  }
-
-  const { lipSync } = React.useContext(SceneContext)
-  const [input, setInput] = React.useState("")
-
-  const [messages, setMessages] = React.useState([])
-  const handleChange = async (event) => {
-    event.preventDefault()
-    setInput(event.target.value)
-  }
-
-  React.useEffect(() => {
+  useEffect(() => {
     const msgBox = document.querySelector("#msgscroll")
     msgBox.scrollTo(0, msgBox.scrollHeight)
   }, [messages])
@@ -93,99 +170,6 @@ ${name}: ${response3}`
       window.removeEventListener("keydown", handleKeyDown)
     }
   }, [])
-
-  const startSpeech = () => {
-    console.info("starting speech")
-    speechRecognition.start()
-    setMicEnabled(true)
-  }
-
-  const stopSpeech = () => {
-    console.info("stopping speech")
-    speechRecognition.stop()
-    setMicEnabled(false)
-  }
-
-  const handleSubmit = async (event) => {
-    if (event.preventDefault) event.preventDefault()
-    // Get the value of the input element
-    const input = event.target.elements.message
-    const value = input.value
-    handleUserChatInput(value)
-  }
-
-  const handleUserChatInput = async (value) => {
-    // Send the message to the localhost endpoint
-    const agent = name
-    // const spell_handler = "charactercreator";
-
-    const newMessages = pruneMessages( messages )
-    newMessages.push( `${speaker}: ${value}` )
-    setInput("")
-    setMessages([ ...newMessages ])
-
-    try {
-      // const url = encodeURI(`http://216.153.52.197:8001/spells/${spell_handler}`)
-
-      const endpoint = "https://upstreet.webaverse.com/api/ai"
-
-      let prompt = `The following is part of a conversation between ${speaker} and ${agent}. ${agent} is descriptive and helpful, and is honest when it doesn't know an answer. Included is a context which acts a short-term memory, used to guide the conversation and track topics.
-
-CONTEXT:
-
-Info about ${agent}
----
-
-Bio: "${bio}"
-
-Question 1: "${question1}"
-Response 1: "${response1}"
-
-Question 2: "${question2}"
-Response 2: "${response2}"
-
-Question 3: "${question3}"
-Response 3: "${response3}"
-
-MOST RECENT MESSAGES:
-
-${newMessages.join("\n")}
-${agent}:`
-
-      const query = {
-        prompt,
-        max_tokens: 250,
-        temperature: 0.9,
-        top_p: 1,
-        frequency_penalty: 0,
-        presence_penalty: 0.6,
-        stop: [speaker + ":", agent + ":", "\\n"],
-      }
-
-      axios.post(endpoint, query).then((response) => {
-        const output = response.data.choices[0].text
-        const ttsEndpoint =
-                'https://voice.webaverse.com/tts?'
-                + 's=' + output
-                + '&voice=' + voices[voice]
-
-        // fetch the audio file from ttsEndpoint
-
-        fetch(ttsEndpoint).then(async (response) => {
-          const blob = await response.blob()
-
-          // convert the blob to an array buffer
-          const arrayBuffer = await blob.arrayBuffer()
-
-          lipSync.startFromAudioFile(arrayBuffer)
-        })
-
-        setMessages([...newMessages, agent + ": " + output])
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  }
 
   let hasSet = false
   useEffect(() => {
@@ -259,20 +243,19 @@ ${agent}:`
   )
 }
 
-
 const maxCharacters = 20000
-export function pruneMessages( messages ) {
+
+export function pruneMessages(messages) {
   let currentSize = 0
   const newMessages = []
 
-  for ( let i = messages.length - 1; i >= 0; i-- ) {
-    const message = messages[ i ]
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i]
 
     currentSize += message.length
 
     // Add up to N characters.
-    if ( currentSize < maxCharacters )
-      newMessages.push( message )
+    if (currentSize < maxCharacters) newMessages.push(message)
     else break
   }
 
@@ -280,4 +263,36 @@ export function pruneMessages( messages ) {
   newMessages.reverse()
 
   return newMessages
+}
+
+const getPrompt = (
+  speaker,
+  agent,
+  newMessages,
+  { bio, question1, response1, question2, response2, question3, response3 },
+) => {
+  return `The following is part of a conversation between ${speaker} and ${agent}. 
+    ${agent} is descriptive and helpful, and is honest when it doesn't know an answer. 
+    Included is a context which acts a short-term memory, used to guide the conversation and track topics.
+
+  CONTEXT:
+  
+  Info about ${agent}
+  ---
+  
+  Bio: "${bio}"
+  
+  Question 1: "${question1}"
+  Response 1: "${response1}"
+  
+  Question 2: "${question2}"
+  Response 2: "${response2}"
+  
+  Question 3: "${question3}"
+  Response 3: "${response3}"
+  
+  MOST RECENT MESSAGES:
+  
+  ${newMessages.join("\n")}
+  ${agent}:`
 }
