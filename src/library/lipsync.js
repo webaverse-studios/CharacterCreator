@@ -19,6 +19,8 @@ for (let m = 0; m < BoundingFrequencyFem.length; m++) {
 export class LipSync {
   constructor(vrm) {
     this.vrm = vrm
+
+
     this.audioContext = new AudioContext()
 
     this.prevAudioGain = this.audioContext.createGain()
