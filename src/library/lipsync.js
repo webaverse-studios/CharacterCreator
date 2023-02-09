@@ -8,16 +8,29 @@ const FFT_SIZE = 1024
 const samplingFrequency = 44100
 
 for (let m = 0; m < BoundingFrequencyMasc.length; m++) {
-    IndicesFrequencyMale[m] = Math.round(((2 * FFT_SIZE) / samplingFrequency) * BoundingFrequencyMasc[m])
-  }
+  IndicesFrequencyMale[m] = Math.round(((2 * FFT_SIZE) / samplingFrequency) * BoundingFrequencyMasc[m])
+}
 
-  for (let m = 0; m < BoundingFrequencyFem.length; m++) {
-    IndicesFrequencyFemale[m] = Math.round(((2 * FFT_SIZE) / samplingFrequency) * BoundingFrequencyFem[m])
+for (let m = 0; m < BoundingFrequencyFem.length; m++) {
+  IndicesFrequencyFemale[m] = Math.round(((2 * FFT_SIZE) / samplingFrequency) * BoundingFrequencyFem[m])
+}
+
+class AudioFile{
+  constructor(file){
+
   }
+  start(){
+
+  }
+  stop(){
+
+  }
+}
 
 export class LipSync {
   constructor(vrm) {
     this.vrm = vrm
+    this.currentAudio = null
 
     const update = (deltaTime, elapsedTime) => {
       requestAnimationFrame(update)
@@ -28,24 +41,30 @@ export class LipSync {
 
   }
 
-  start(stream) {
-    this.audioContext = new AudioContext()
-    this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream)
-    this.meter = LipSync.createAudioMeter(this.audioContext)
-    this.mediaStreamSource.connect(this.meter)
-  }
+  // start(stream) {
+  //   console.log("starts")
+  //   this.audioContext = new AudioContext()
+  //   this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream)
+  //   this.meter = LipSync.createAudioMeter(this.audioContext)
+  //   this.mediaStreamSource.connect(this.meter)
+  // }
 
   startFromAudioFile(file) {
+    new AudioFile(file)
     if(!this.audioContext) this.audioContext = new AudioContext()
-
+    this.gainNode = this.audioContext.createGain();
+    console.log(this.audioContext)
 
     if(!this.userSpeechAnalyzer)
         this.userSpeechAnalyzer = this.audioContext.createAnalyser()
     this.userSpeechAnalyzer.smoothingTimeConstant = 0.5
     this.userSpeechAnalyzer.fftSize = FFT_SIZE
     
-    if (this.mediaStreamSource)
+    
+    if (this.mediaStreamSource){
+      console.log(this.mediaStreamSource.volume)
       this.mediaStreamSource.stop()
+    }
     this.audioContext.decodeAudioData(file).then((buffer) => {
         this.mediaStreamSource = this.audioContext.createBufferSource()
         this.mediaStreamSource.buffer = buffer
