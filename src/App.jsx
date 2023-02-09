@@ -14,6 +14,7 @@ import { EffectManager } from "./library/effectManager"
 
 import Landing from "./pages/Landing"
 import View from "./pages/View"
+import Mint from "./pages/Mint"
 import BioPage from "./pages/Bio"
 import Save from "./pages/Save"
 import Appearance from "./pages/Appearance"
@@ -293,7 +294,7 @@ export default function App() {
       fetchNewModel={fetchNewModel}
       />,
     [ViewMode.LOAD]: <Load />,
-    // [ViewMode.MINT]: <Mint />,
+    [ViewMode.MINT]: <Mint />,
     [ViewMode.SAVE]: <Save />,
     [ViewMode.CHAT]: <View templateInfo={templateInfo} />,
   }
