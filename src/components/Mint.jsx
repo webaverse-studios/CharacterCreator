@@ -41,14 +41,47 @@ export default function MintPopup({screenshotPosition}) {
           })
           return addressArray.length > 0 ? addressArray[0] : ""
         } else {
-            window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: chainId }],
-            })
-            const addressArray = await window.ethereum.request({
-              method: 'eth_requestAccounts',
-            })
-            return addressArray.length > 0 ? addressArray[0] : ""
+            try {
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: chainId }],
+              })
+              const addressArray = await window.ethereum.request({
+                method: 'eth_requestAccounts',
+              })
+              return addressArray.length > 0 ? addressArray[0] : ""
+            } catch (err) {
+              console.log("polygon not find:", err)
+              if (err.code === 4902) {  // Add Polygon chain to the metamask.
+                try {
+                  await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [
+                      {   
+                        chainId: '0x89',
+                        chainName: 'Polygon Mainnet',
+                        rpcUrls: ['https://polygon-rpc.com'],
+                        nativeCurrency: {
+                            name: "Matic",
+                            symbol: "MATIC",
+                            decimals: 18
+                        },
+                        blockExplorerUrls: ['https://polygonscan.com/']                      },
+                    ]
+                  });
+                await window.ethereum.request({
+                  method: 'wallet_switchEthereumChain',
+                  params: [{ chainId: chainId }],
+                })
+                const addressArray = await window.ethereum.request({
+                  method: 'eth_requestAccounts',
+                })
+              return addressArray.length > 0 ? addressArray[0] : ""
+                } catch (error) {
+                  console.log("Adding polygon chain failed", error);
+                }
+            }
+          }
         }
       } catch (err) {
         return "";
