@@ -23,8 +23,18 @@ export class LipSync {
 
     this.audioContext = new AudioContext()
 
+    this.userSpeechAnalyzer = this.audioContext.createAnalyser()
+    this.userSpeechAnalyzer.smoothingTimeConstant = 0.5
+    this.userSpeechAnalyzer.fftSize = FFT_SIZE
+
     this.prevAudioGain = this.audioContext.createGain()
+    this.prevAudioGain.gain.value = 0;
     this.prevAudioGain.connect(this.audioContext.destination)
+
+    console.log(this.prevAudioGain)
+    //this.prevAudioGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+
+    console.log(this.audioContext)
 
     this.fadeOutSeconds = 1
     this.deltaTime = 0
@@ -45,11 +55,6 @@ export class LipSync {
   startFromAudioFile(file) {
     //new AudioFile(file)
 
-    if(!this.userSpeechAnalyzer)
-        this.userSpeechAnalyzer = this.audioContext.createAnalyser()
-    this.userSpeechAnalyzer.smoothingTimeConstant = 0.5
-    this.userSpeechAnalyzer.fftSize = FFT_SIZE
-    
     
     if (this.mediaStreamSource){
       if (this.lastAudio){
@@ -58,6 +63,7 @@ export class LipSync {
 
       this.lastAudio = this.mediaStreamSource;
       this.lastAudio.connect(this.prevAudioGain)
+      console.log(this.lastAudio)
       this.prevAudioGain.gain.value = 1.0;
     }
     this.audioContext.decodeAudioData(file).then((buffer) => {
@@ -66,6 +72,7 @@ export class LipSync {
         this.meter = LipSync.createAudioMeter(this.audioContext)
         this.mediaStreamSource.connect(this.meter)
         this.mediaStreamSource.connect(this.audioContext.destination)
+        this.mediaStreamSource.connect(this.prevAudioGain)
         this.mediaStreamSource.start()
         // connect the output of mediaStreamSource to the input of userSpeechAnalyzer
         this.mediaStreamSource.connect(this.userSpeechAnalyzer)
@@ -85,7 +92,6 @@ export class LipSync {
 
   update(elapsedTime) {
     if (this.prevAudioGain){
-      console.log(this.prevAudioGain.gain.value)
       if (this.prevAudioGain.gain.value > 0){
         this.prevAudioGain.gain.value -= this.deltaTime/this.fadeOutSeconds;
       }
