@@ -15,13 +15,13 @@ import { AnimationManager } from "./library/animationManager"
 import Scene from "./components/Scene"
 import Background from "./components/Background"
 
-import View from "./pages/View"
-import Save from "./pages/Save"
-import Load from "./pages/Load"
-import BioPage from "./pages/Bio"
-import Create from "./pages/Create"
-import Landing from "./pages/Landing"
-import Appearance from "./pages/Appearance"
+const View = React.lazy(() => import("./pages/View"))
+const Save = React.lazy(() => import("./pages/Save"))
+const Load = React.lazy(() => import("./pages/Load"))
+const BioPage = React.lazy(() => import("./pages/Bio"))
+const Create = React.lazy(() => import("./pages/Create"))
+const Landing = React.lazy(() => import("./pages/Landing"))
+const Appearance = React.lazy(() => import("./pages/Appearance"))
 
 // dynamically import the manifest
 const assetImportPath = import.meta.env.VITE_ASSET_PATH + "/manifest.json"
