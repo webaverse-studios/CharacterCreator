@@ -2,11 +2,15 @@ import React from "react"
 import styles from "./Mint.module.scss"
 import { ViewMode, ViewContext } from "../context/ViewContext"
 
+///<<<<<<< tcm-screenshot
+///import Mint from "../components/Mint"
+///=======
 // import Mint from "../components/Mint"
 // import ResizableDiv from "../components/Resizable"
+///>>>>>>> full-mint-support
 import CustomButton from "../components/custom-button"
 
-function MintComponent() {
+function MintComponent({screenshotManager, blinkManager, animationManager}) {
   const { setViewMode } = React.useContext(ViewContext)
   // const [screenshotPosition,  setScreenshotPosition] = React.useState({x:250,y:25,width:256,height:256});
 
@@ -30,6 +34,14 @@ function MintComponent() {
   return (
     <div className={styles.container}>
       <div className={"sectionTitle"}>Mint Your Character</div>
+///<<<<<<< tcm-screenshot
+      ///<div className={styles.mintContainer}>
+        ///<div className={styles.topLine} />
+       /// <div className={styles.bottomLine} />
+        ///<div className={styles.scrollContainer}>
+          
+         /// <Mint screenshotManager = {screenshotManager} blinkManager = {blinkManager} animationManager = {animationManager}/>
+///=======
       
       {/* <ResizableDiv setScreenshotPosition = {setScreenshotPosition} screenshotPosition = {screenshotPosition}/> */}
 
@@ -56,6 +68,7 @@ function MintComponent() {
           />
 
           <span className={styles.genesisText}>(<span className={styles.required}>Genesis pass holders only</span>)</span>
+///>>>>>>> full-mint-support
         </div>
       </div>
 
