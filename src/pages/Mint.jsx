@@ -3,19 +3,13 @@ import styles from "./Mint.module.scss"
 import { ViewMode, ViewContext } from "../context/ViewContext"
 import { SceneContext } from "../context/SceneContext"
 import * as THREE from 'three'
-
-///<<<<<<< tcm-screenshot
-import Mint from "../components/Mint"
-///=======
-// import Mint from "../components/Mint"
-// import ResizableDiv from "../components/Resizable"
-///>>>>>>> full-mint-support
 import CustomButton from "../components/custom-button"
+import { mintAsset } from "../library/mint-utils"
 
 const localVector = new THREE.Vector3();
 
 function MintComponent({screenshotManager, blinkManager, animationManager}) {
-  const { templateInfo, model } = React.useContext(SceneContext)
+  const { templateInfo, model, avatar } = React.useContext(SceneContext)
   const { setViewMode } = React.useContext(ViewContext)
   // const [screenshotPosition,  setScreenshotPosition] = React.useState({x:250,y:25,width:256,height:256});
 
@@ -36,8 +30,26 @@ function MintComponent({screenshotManager, blinkManager, animationManager}) {
     )
   }
 
-  function Mint(){
-    takeScreenshot();
+  async function Mint(){
+    const screenshot = takeScreenshot();
+    console.log(screenshot)
+    console.log(mintAsset)
+    const result = await mintAsset(getAvatarTraits(),screenshot,model)
+    console.log(result);
+  }
+
+  // 
+  const getAvatarTraits = () => {
+    let metadataTraits = []
+    Object.keys(avatar).map((trait) => {
+      if (Object.keys(avatar[trait]).length !== 0) {
+        metadataTraits.push({
+          trait_type: trait,
+          value: avatar[trait].name,
+        })
+      }
+    })
+    return metadataTraits
   }
 
   function takeScreenshot(){
