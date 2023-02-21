@@ -32,8 +32,6 @@ function MintComponent({screenshotManager, blinkManager, animationManager}) {
 
   async function Mint(){
     const screenshot = takeScreenshot();
-    console.log(screenshot)
-    console.log(mintAsset)
     const result = await mintAsset(getAvatarTraits(),screenshot,model)
     console.log(result);
   }
