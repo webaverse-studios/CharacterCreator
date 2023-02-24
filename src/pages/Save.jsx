@@ -8,16 +8,12 @@ import { LanguageContext } from "../context/LanguageContext"
 
 function Save() {
   const { setViewMode } = React.useContext(ViewContext)
-    const back = () => {
-        setViewMode(ViewMode.BIO)
-    }
-
-    const mint = () => {
-        setViewMode(ViewMode.MINT)
-    }
+  const back = () => {
+      setViewMode(ViewMode.BIO)
+  }
 
   const mint = () => {
-    setViewMode(ViewMode.CHAT)
+      setViewMode(ViewMode.MINT)
   }
 
   const next = () => {
@@ -39,7 +35,7 @@ function Save() {
           onClick={back}
         />
         <ExportMenu />
-        {/*
+        
                 <CustomButton
                     theme="light"
                     text="Chat"
@@ -47,7 +43,7 @@ function Save() {
                     className={styles.buttonRight}
                     onClick={mint}
                 />
-                */}
+               
         <CustomButton
           theme="light"
           text={t('callToAction.chat')}
