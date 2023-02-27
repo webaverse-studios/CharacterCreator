@@ -66,7 +66,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
   useEffect(() => {
     if (loadCustomTrait != null){
       if (loadCustomTrait[0].name.endsWith(".vrm")){
-        resetAvatar()
+        //resetAvatar()
 
         const url = URL.createObjectURL(loadCustomTrait[0]);
         const option = {
@@ -75,7 +75,7 @@ export default function Selector({templateInfo, animationManager, blinkManager, 
             name:"upload",
             directory:url
           },
-          trait:templateInfo.traits.find((t) => t.name === "body")
+          trait:templateInfo.traits.find((t) => t.name === currentTraitName)
         }
         loadOptions([option], false, false, false).then((loadedData)=>{
           URL.revokeObjectURL(url);
