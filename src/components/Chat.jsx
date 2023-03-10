@@ -203,9 +203,6 @@ ${agent}:`
         axios.post(endpoint, query).then((response) => {
           const output = response.data.choices[0].text
 
-          ////////////////////////////////////////////////////////
-          // COMMENTED OUT THE VOICE GENERATION UNTIL THE SCALE UP
-          /*
           const ttsEndpoint =
             "https://voice.webaverse.com/tts?" +
             "s=" +
@@ -223,8 +220,6 @@ ${agent}:`
 
             lipSync.startFromAudioFile(arrayBuffer)
           })
-          */
-          ////////////////////////////////////////////////////////
 
           const agentMessageOutputObject = {
             name: agent,
