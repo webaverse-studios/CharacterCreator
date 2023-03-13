@@ -24,7 +24,7 @@ function Create({fetchNewModel}) {
 
   const selectClass = (characterClass) => {
     fetchNewModel(characterClass.templateIndex).then(()=>{
-        setViewMode(ViewMode.APPEARANCE)
+        setViewMode(ViewMode.CHAT)
     })
     !isMute && playSound('classSelect');
 

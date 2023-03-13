@@ -167,9 +167,17 @@ ${name}: ${response3}`
 
         const endpoint = "https://upstreet.webaverse.com/api/ai"
 
-        let prompt = `The following is part of a conversation between ${speaker} and ${agent}. ${agent} is descriptive and helpful, and is honest when it doesn't know an answer. Included is a context which acts a short-term memory, used to guide the conversation and track topics.
+        let prompt = 
 
-CONTEXT:
+        //Also, ${agent} ends every sentence with (emotion) and {current relationship}
+`The following is part of a conversation between ${speaker} and ${agent}. 
+${agent} attitude depends on the current relationship with ${speaker}.
+Initial status of relationship between ${agent} and speaker ${speaker} is: neutral
+There are 4 different type of relationships: enemy, neutral, friend, lover.
+Depending on current relationship ${agent} will agree to answer or not
+Included is a context which acts a short-term memory, used to guide the conversation and track topics.
+
+${agent} ends every sentence with (emotion) and its {current relationship}
 
 Info about ${agent}
 ---
@@ -184,6 +192,8 @@ Response 2: "${response2}"
 
 Question 3: "${question3}"
 Response 3: "${response3}"
+
+Favourite color: rainbow
 
 MOST RECENT MESSAGES:
 
@@ -203,28 +213,25 @@ ${agent}:`
         axios.post(endpoint, query).then((response) => {
           const output = response.data.choices[0].text
 
-          ////////////////////////////////////////////////////////
-          // COMMENTED OUT THE VOICE GENERATION UNTIL THE SCALE UP
-          /*
-          const ttsEndpoint =
-            "https://voice.webaverse.com/tts?" +
-            "s=" +
-            output +
-            "&voice=" +
-            voices[voice]
 
-          // fetch the audio file from ttsEndpoint
+          // const ttsEndpoint =
+          //   "https://voice.webaverse.com/tts?" +
+          //   "s=" +
+          //   output +
+          //   "&voice=" +
+          //   voices[voice]
+
+          // // fetch the audio file from ttsEndpoint
           
-          fetch(ttsEndpoint).then(async (response) => {
-            const blob = await response.blob()
+          // fetch(ttsEndpoint).then(async (response) => {
+          //   const blob = await response.blob()
 
-            // convert the blob to an array buffer
-            const arrayBuffer = await blob.arrayBuffer()
+          //   // convert the blob to an array buffer
+          //   const arrayBuffer = await blob.arrayBuffer()
 
-            lipSync.startFromAudioFile(arrayBuffer)
-          })
-          */
-          ////////////////////////////////////////////////////////
+          //   lipSync.startFromAudioFile(arrayBuffer)
+          // })
+
 
           const agentMessageOutputObject = {
             name: agent,
