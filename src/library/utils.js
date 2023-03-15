@@ -1,10 +1,7 @@
 import * as THREE from "three";
-import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 import { Buffer } from "buffer";
 import html2canvas from "html2canvas";
-import VRMExporter from "./VRMExporter";
 import { CullHiddenFaces } from './cull-mesh.js';
-import { combine } from "./merge-geometry";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import { VRMHumanBoneName } from "@pixiv/three-vrm";
@@ -24,12 +21,10 @@ export async function prepareModel(templateInfo){
     return category.traits[0]
   })
 
-  const returnedTraits = await Promise.all(traits.map((trait) => {
+  await Promise.all(traits.map((trait) => {
     return loadModel(trait)
   }));
 }
-
-
 
 export async function loadModel(file, onProgress) {
   const gltfLoader = new GLTFLoader()
@@ -63,31 +58,6 @@ export const cullHiddenMeshes = (avatar) => {
     }
   }
   CullHiddenFaces(models)
-}
-
-export async function getModelFromScene(avatarScene, format = 'glb', skinColor = new THREE.Color(1, 1, 1)) {
-  if (format && format === 'glb') {
-    const exporter = new GLTFExporter();
-    const options = {
-      trs: false,
-      onlyVisible: true,
-      truncateDrawRange: true,
-      binary: true,
-      forcePowerOfTwoTextures: false,
-      maxTextureSize: 1024 || Infinity
-    };
-
-    const avatar = await combine({ transparentColor: skinColor, avatar: avatarScene });
-
-    const glb = await new Promise((resolve) => exporter.parse(avatar, resolve, (error) => console.error("Error getting model", error), options));
-    return new Blob([glb], { type: 'model/gltf-binary' });
-  } else if (format && format === 'vrm') {
-    const exporter = new VRMExporter();
-    const vrm = await new Promise((resolve) => exporter.parse(avatarScene, resolve));
-    return new Blob([vrm], { type: 'model/gltf-binary' });
-  } else {
-    return console.error("Invalid format");
-  }
 }
 
 export async function getScreenShot(elementId, delay = 0) {
@@ -174,31 +144,6 @@ async function getScreenShotByElementId(id) {
     return blob;
   });
 }
-function createSpecifiedImage(ctx){
-  const context = createContext(256,256);
-  const imageData = ctx.getImageData(left, top, width, height);
-  const arr = new ImageData(imageData, xTileSize, yTileSize);
-  const tempcanvas = document.createElement("canvas");
-  tempcanvas.width = xTileSize;
-  tempcanvas.height = yTileSize;
-  const tempctx = tempcanvas.getContext("2d");
-
-  tempctx.putImageData(arr, 0, 0);
-  tempctx.save();
-  // draw tempctx onto context
-  context.drawImage(tempcanvas, min.x * ATLAS_SIZE_PX, min.y * ATLAS_SIZE_PX, xTileSize, yTileSize);
-
-}
-
-function createContext({ width, height }) {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext("2d");
-  context.fillStyle = "white";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  return context;
-}
 
 export async function getSkinColor(scene, targets) {
   for (const target of targets) {
@@ -219,16 +164,6 @@ export async function getSkinColor(scene, targets) {
       }
     }
   }
-}
-
-export async function setMaterialColor(scene, value, target) {
-  const object = scene.getObjectByName(target);
-  const randColor = value;
-  const skinShade = new THREE.Color(randColor).convertLinearToSRGB();
-  const mat = object.material.length ? object.material[0] : object.material;
-  mat.uniforms.litFactor.value.set(skinShade);
-  const hslSkin = { h: 0, s: 0, l: 0 };
-  skinShade.getHSL(hslSkin);
 }
 
 //make sure to remove this data when downloading, as this data is only required while in edit mode
@@ -479,31 +414,6 @@ function getVRMMeta(name){
   }
 }
 
-// function getVRMDefaultLookAt(){
-//   return {
-//     offsetFromHeadBone:[0,0,0],
-//     applier:{
-//       rangeMapHorizontalInner:{
-//         inputMaxValue:90,
-//         inputSacle:62.1
-//       },
-//       rangeMapHorizontalOuter:{
-//         inputMaxValue:90,
-//         inputSacle:68.6
-//       },
-//       rangeMapVerticalDown:{
-//         inputMaxValue:90,
-//         inputSacle:57.9
-//       },
-//       rangeMapVerticalUp:{
-//         inputMaxValue:90,
-//         inputSacle:52.8
-//       }
-//     },
-//     type:"bone"
-//   }
-
-// }
 function getHumanoidByBoneNames(skinnedMesh){
   const humanBones = {}
   skinnedMesh.skeleton.bones.map((bone)=>{
