@@ -203,11 +203,8 @@ ${agent}:`
         axios.post(endpoint, query).then((response) => {
           const output = response.data.choices[0].text
 
-          ////////////////////////////////////////////////////////
-          // COMMENTED OUT THE VOICE GENERATION UNTIL THE SCALE UP
-          /*
           const ttsEndpoint =
-            "https://voice.webaverse.com/tts?" +
+            "https://ai-voice.webaverse.ai/tts?" +
             "s=" +
             output +
             "&voice=" +
@@ -223,8 +220,6 @@ ${agent}:`
 
             lipSync.startFromAudioFile(arrayBuffer)
           })
-          */
-          ////////////////////////////////////////////////////////
 
           const agentMessageOutputObject = {
             name: agent,
@@ -268,9 +263,6 @@ ${agent}:`
   return (
     <div className={styles["chatBox"]}>
       <div className={styles["speaker"]}>
-        <p className={styles["warning"]}>
-          {t("text.apiUnderMaintnance")}
-        </p>
         <label htmlFor="speaker">{t("labels.yourName")}</label>
         <input
           type="text"
