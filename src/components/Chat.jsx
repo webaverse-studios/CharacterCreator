@@ -263,9 +263,6 @@ ${agent}:`
   return (
     <div className={styles["chatBox"]}>
       <div className={styles["speaker"]}>
-        <p className={styles["warning"]}>
-          {t("text.apiUnderMaintnance")}
-        </p>
         <label htmlFor="speaker">{t("labels.yourName")}</label>
         <input
           type="text"
