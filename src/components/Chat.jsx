@@ -204,7 +204,7 @@ ${agent}:`
           const output = response.data.choices[0].text
 
           const ttsEndpoint =
-            "https://voice.webaverse.com/tts?" +
+            "https://ai-voice.webaverse.ai/tts?" +
             "s=" +
             output +
             "&voice=" +
